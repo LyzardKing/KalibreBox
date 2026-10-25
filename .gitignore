@@ -1,0 +1,21 @@
+# Qt build dirs
+build*/
+.qtc_clangd/
+CMakeLists.txt.user*
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+
+# Qt
+moc_*.cpp
+qrc_*.cpp
+*.qm
+.qm/
+
+# Editors
+.vscode/
+.idea/
+*.kdev4
