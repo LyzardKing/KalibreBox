@@ -22,6 +22,26 @@ Early development. Target: Linux desktop first, Android later.
 - Kirigami 6 QML module (`qml6-module-org-kde-kirigami`)
 - CMake 3.20+
 
+## Configuration
+
+Create a gitignored `local.properties` file next to `CMakeLists.txt`:
+
+```properties
+dropbox.key=your-app-key
+```
+
+On the Dropbox side (App Console → your app → Settings → OAuth 2), register the
+redirect URI **exactly** as:
+
+```
+http://127.0.0.1:61196/callback
+```
+
+The port must be stable because Dropbox matches redirect URIs exactly. Change
+it with `dropbox.oauthPort=...` (env: `KALIBREBOX_DROPBOX_OAUTH_PORT`) — and
+register the matching URI in the App Console. No app secret is required; the
+PKCE authorization-code flow is used.
+
 ## Build
 
 ```sh

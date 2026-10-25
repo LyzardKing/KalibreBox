@@ -49,6 +49,18 @@ QString compileTimeAppKey()
 #endif
 }
 
+// Dropbox requires the redirect_uri to be pre-registered in the App Console,
+// so the loopback port must be stable. Overridable via env/settings/port.
+int oauthPort()
+{
+#ifdef KALIBREBOX_DROPBOX_OAUTH_PORT
+    const int compiled = QString::fromUtf8(KALIBREBOX_DROPBOX_OAUTH_PORT).toInt();
+    if (compiled > 0)
+        return compiled;
+#endif
+    return 61196;
+}
+
 QString generateState()
 {
     QByteArray raw(stateBytes, Qt::Uninitialized);
@@ -129,8 +141,14 @@ void DropboxAuthProvider::startLogin()
     m_state = generateState();
 
     m_redirectServer = new QTcpServer(this);
-    if (!m_redirectServer->listen(QHostAddress::LocalHost)) {
-        const QString error = QStringLiteral("Could not open a local redirect port: %1")
+    // The port is registered in the Dropbox App Console, so only this one
+    // port may be used (changing it would break the exact redirect_uri match).
+    const int port = oauthPort();
+    if (!m_redirectServer->listen(QHostAddress::LocalHost, port)) {
+        const QString error = QStringLiteral(
+            "Could not listen on http://127.0.0.1:%1 for the OAuth redirect: %2. "
+            "Another process may be occupying the port; free it and retry.")
+                                  .arg(port)
                                   .arg(m_redirectServer->errorString());
         emit authFailed(error);
         cancelLogin();

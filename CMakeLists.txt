@@ -31,16 +31,20 @@ set(KALIBREBOX_CORE_SOURCES
 # Dropbox app key (PKCE flow needs no secret). Read from local.properties, a
 # gitignored file next to this CMakeLists.
 set(DROPBOX_APP_KEY "")
+set(DROPBOX_OAUTH_PORT "61196")
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/local.properties")
     file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/local.properties" _dropbox_props)
     foreach(_prop_line IN LISTS _dropbox_props)
         if(_prop_line MATCHES "^dropbox.key=(.*)$")
             set(DROPBOX_APP_KEY "${CMAKE_MATCH_1}")
+        elseif(_prop_line MATCHES "^dropbox.oauthPort=(.*)$")
+            set(DROPBOX_OAUTH_PORT "${CMAKE_MATCH_1}")
         endif()
     endforeach()
 endif()
 string(LENGTH "${DROPBOX_APP_KEY}" DROPBOX_APP_KEY_LENGTH)
 message(STATUS "Dropbox app key: ${DROPBOX_APP_KEY_LENGTH} characters")
+message(STATUS "Dropbox OAuth port: ${DROPBOX_OAUTH_PORT}")
 
 qt_add_library(kalibreboxcore STATIC ${KALIBREBOX_CORE_SOURCES})
 target_include_directories(kalibreboxcore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp)
@@ -48,6 +52,10 @@ target_link_libraries(kalibreboxcore PUBLIC Qt6::Core Qt6::Gui Qt6::Sql Qt6::Net
 if(DROPBOX_APP_KEY)
     target_compile_definitions(kalibreboxcore PRIVATE
         KALIBREBOX_DROPBOX_APP_KEY="${DROPBOX_APP_KEY}")
+endif()
+if(DROPBOX_OAUTH_PORT)
+    target_compile_definitions(kalibreboxcore PRIVATE
+        KALIBREBOX_DROPBOX_OAUTH_PORT="${DROPBOX_OAUTH_PORT}")
 endif()
 
 qt_add_executable(kalibrebox
