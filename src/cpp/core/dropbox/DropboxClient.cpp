@@ -5,18 +5,23 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLoggingCategory>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QDir>
+#include <QFileInfo>
 #include <QSaveFile>
 #include <QSettings>
+
+Q_LOGGING_CATEGORY(kalibreboxDropbox, "kalibrebox.dropbox")
 
 namespace KalibreBox {
 
 namespace {
 
 const QString rpcHost = QStringLiteral("https://api.dropbox.com/2/");
-const QString contentHost = QStringLiteral("https://content.dropbox.com/2/");
+const QString contentHost = QStringLiteral("https://content.dropboxapi.com/2/");
 const QString bearerPrefix = QStringLiteral("Bearer ");
 
 DropboxFileMetadata fileMetadataFromJson(const QJsonObject &object)
@@ -290,6 +295,11 @@ void DropboxClient::downloadToFile(
                     });
                 return;
             }
+            qCDebug(kalibreboxDropbox).noquote()
+                << QStringLiteral("Content response: HTTP %1, %2 bytes")
+                       .arg(statusCode)
+                       .arg(QString::number(reply->size()));
+
             reply->deleteLater();
 
             const QByteArray apiResultHeader =
@@ -304,10 +314,18 @@ void DropboxClient::downloadToFile(
                                 .value(QStringLiteral("error_summary"))
                                 .toString();
                 }
-                if (error.isEmpty())
-                    error = QStringLiteral("Download failed (HTTP %1): %2")
-                                .arg(statusCode)
-                                .arg(QString::fromUtf8(body.left(256)));
+                if (error.isEmpty()) {
+                    if (statusCode != 0) {
+                        error = QStringLiteral("Download failed (HTTP %1): %2")
+                                    .arg(statusCode)
+                                    .arg(QString::fromUtf8(body.left(256)));
+                    } else {
+                        // Network-level failure before any HTTP response
+                        // (DNS, connection, TLS …) — report the real cause.
+                        error = QStringLiteral("Download failed: %1")
+                                    .arg(reply->errorString());
+                    }
+                }
                 callback(std::nullopt, error);
                 return;
             }
@@ -320,6 +338,8 @@ void DropboxClient::downloadToFile(
                     metadata = fileMetadataFromJson(resultDocument.object());
             }
 
+            // QSaveFile refuses to create files in non-existent directories.
+            QFileInfo(localTargetPath).dir().mkpath(QStringLiteral("."));
             QSaveFile file(localTargetPath);
             if (!file.open(QIODevice::WriteOnly)) {
                 callback(std::nullopt,
@@ -358,6 +378,10 @@ void DropboxClient::downloadToFile(
                              (bearerPrefix + m_authProvider->credential()->accessToken).toUtf8());
         request.setRawHeader(QByteArrayLiteral("Dropbox-API-Arg"),
                              QJsonDocument(apiArguments).toJson(QJsonDocument::Compact));
+        qCDebug(kalibreboxDropbox).noquote()
+            << QStringLiteral("GET content: %1 (local: %2)")
+                   .arg(QString::fromUtf8(request.rawHeader(QByteArrayLiteral("Dropbox-API-Arg"))),
+                        localTargetPath);
         QNetworkReply *reply = m_nam->post(request, QByteArray());
         connect(reply, &QNetworkReply::finished, reply,
                 [onCompletion, reply]() { onCompletion(reply); });

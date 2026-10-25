@@ -25,7 +25,6 @@ set(KALIBREBOX_CORE_SOURCES
     src/cpp/core/dropbox/Pkce.cpp
     src/cpp/core/model/Library.cpp
     src/cpp/core/text/TextNormalization.cpp
-    src/cpp/dev/DevController.cpp
     src/cpp/ui/BookListModel.cpp
     src/cpp/ui/LibraryController.cpp
 )
@@ -73,7 +72,6 @@ qt_add_qml_module(kalibrebox
     VERSION 1.0
     QML_FILES
         src/qml/Main.qml
-        src/qml/DevPage.qml
         src/qml/LibraryPage.qml
 )
 

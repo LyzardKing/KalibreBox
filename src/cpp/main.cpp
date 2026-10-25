@@ -7,7 +7,6 @@
 
 #include "core/dropbox/DropboxClient.h"
 #include "core/dropbox/DropboxCredential.h"
-#include "dev/DevController.h"
 #include "ui/LibraryController.h"
 
 int main(int argc, char *argv[])
@@ -31,15 +30,8 @@ int main(int argc, char *argv[])
     localization->setTranslationDomain(QStringLiteral("kalibrebox"));
     engine.rootContext()->setContextObject(localization);
 
-    auto *devController = new KalibreBox::DevController(dropbox, &engine);
-    auto *libraryController = new KalibreBox::LibraryController(dropbox, &engine);
-    QObject::connect(devController, &KalibreBox::DevController::booksChanged,
-                     libraryController, &KalibreBox::LibraryController::refresh);
-    QObject::connect(devController, &KalibreBox::DevController::librariesChanged,
-                     libraryController, &KalibreBox::LibraryController::refresh);
-    engine.rootContext()->setContextProperty(QStringLiteral("dev"), devController);
-    engine.rootContext()->setContextProperty(QStringLiteral("library"),
-                                             libraryController);
+    engine.rootContext()->setContextProperty(
+        QStringLiteral("library"), new KalibreBox::LibraryController(dropbox, &engine));
 
     QObject::connect(
         &engine,

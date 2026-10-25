@@ -61,11 +61,6 @@ QVariant BookListModel::data(const QModelIndex &index, int role) const
     case HasCoverRole:
         return book.hasCover && m_coverUrls.contains(book.id);
     case CoverRole:
-        if (book.hasCover && !m_coverUrls.contains(book.id)
-            && m_coverRequestHandler && !m_requestedCovers.contains(book.id)) {
-            m_requestedCovers.insert(book.id);
-            m_coverRequestHandler(book.id);
-        }
         return m_coverUrls.value(book.id);
     case FormatsRole: {
         QVariantList formats;

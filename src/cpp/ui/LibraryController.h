@@ -16,9 +16,9 @@ class DropboxClient;
 class LibraryRepository;
 
 /**
- * UI controller for the library book list: loads the local metadata.db of the
- * current library, applies sort order / search, and lazily fetches covers
- * through the Dropbox client.
+ * UI controller for the library book list: loads the current library's
+ * metadata.db, applies sort order / search, lazily fetches covers, and owns
+ * the library setup (add/sync) and Dropbox sign-in flows used by the app.
  */
 class LibraryController : public QObject
 {
@@ -29,6 +29,10 @@ class LibraryController : public QObject
     Q_PROPERTY(QString libraryName READ libraryName NOTIFY libraryChanged)
     Q_PROPERTY(QString searchQuery READ searchQuery WRITE setSearchQuery NOTIFY searchQueryChanged)
     Q_PROPERTY(int sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
+    Q_PROPERTY(QString status READ status NOTIFY statusChanged)
+    Q_PROPERTY(bool syncing READ syncing NOTIFY syncingChanged)
+    Q_PROPERTY(bool signedIn READ signedIn NOTIFY signedInChanged)
+    Q_PROPERTY(bool awaitingAuthCode READ awaitingAuthCode NOTIFY awaitingAuthCodeChanged)
 
 public:
     explicit LibraryController(DropboxClient *client, QObject *parent = nullptr);
@@ -38,20 +42,38 @@ public:
     QString libraryName() const;
     QString searchQuery() const;
     int sortOrder() const;
+    QString status() const;
+    bool syncing() const;
+    bool signedIn() const;
+    bool awaitingAuthCode() const;
 
     void setSearchQuery(const QString &query);
     void setSortOrder(int order);
 
     Q_INVOKABLE void refresh();
+    /// Downloads the current library's metadata.db and reloads the list.
+    Q_INVOKABLE void syncLibrary();
+    /// Path may be a plain folder path or a shared link URL.
+    Q_INVOKABLE void addLibrary(const QString &nameOrPath, const QString &name);
+    Q_INVOKABLE void removeCurrentLibrary();
+    Q_INVOKABLE void signIn();
+    Q_INVOKABLE void signOut();
+    Q_INVOKABLE void submitAuthCode(const QString &code);
 
 signals:
     void libraryChanged();
     void searchQueryChanged();
     void sortOrderChanged();
+    void statusChanged();
+    void syncingChanged();
+    void signedInChanged();
+    void awaitingAuthCodeChanged();
 
 private:
     QString coverPath(const QString &libraryId, qlonglong bookId) const;
     void requestCover(qlonglong bookId, const Book &book);
+    void setStatus(const QString &status);
+    void setupAuthConnections();
 
     /// Absolute Dropbox path of a book's cover.jpg.
     QString directCoverDropboxPath(const QString &libraryPath, const Book &book) const;
@@ -66,6 +88,10 @@ private:
     SortOrder m_sortOrder = SortOrder::RecentlyAdded;
     QSet<qlonglong> m_pendingCovers;
     std::optional<qlonglong> m_currentBookId;
+
+    QString m_status;
+    bool m_syncing = false;
+    bool m_awaitingAuthCode = false;
 };
 
 }

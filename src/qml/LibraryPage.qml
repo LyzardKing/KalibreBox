@@ -1,48 +1,143 @@
 import QtQuick
 import QtQuick.Controls as Controls
+import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
 Kirigami.Page {
     id: root
     title: library.hasLibrary ? library.libraryName : i18n("Library")
 
-    // Sort order values mirror KalibreBox::SortOrder.
     actions: [
         Kirigami.Action {
-            icon.name: "view-sort-descending"
-            text: i18n("Sort")
-            children: [
-                Kirigami.Action {
-                    text: i18n("Title")
-                    checkable: true
-                    checked: library.sortOrder === 0
-                    onTriggered: library.sortOrder = 0
-                },
-                Kirigami.Action {
-                    text: i18n("Author")
-                    checkable: true
-                    checked: library.sortOrder === 1
-                    onTriggered: library.sortOrder = 1
-                },
-                Kirigami.Action {
-                    text: i18n("Recently added")
-                    checkable: true
-                    checked: library.sortOrder === 2
-                    onTriggered: library.sortOrder = 2
-                }
-            ]
+            icon.name: "list-add"
+            text: i18n("Add library")
+            onTriggered: addLibraryDialog.open()
         }
     ]
 
-    header: Controls.Control {
-        padding: Kirigami.Units.smallSpacing
+    function openIfAwaiting() {
+        if (library.awaitingAuthCode)
+            signInDialog.open()
+    }
 
-        contentItem: Controls.TextField {
-            id: searchField
-            placeholderText: i18n("Filter by title or author…")
-            text: library.searchQuery
-            onTextChanged: library.searchQuery = text
+    Connections {
+        target: library
+        function onAwaitingAuthCodeChanged() {
+            if (library.awaitingAuthCode)
+                signInDialog.open()
         }
+    }
+
+    readonly property Kirigami.Action addLibraryAction: Kirigami.Action {
+        text: i18n("Add library")
+        onTriggered: addLibraryDialog.open()
+    }
+    readonly property Kirigami.Action signInAction: Kirigami.Action {
+        text: i18n("Sign in to Dropbox")
+        onTriggered: signInDialog.open()
+    }
+
+    header: ColumnLayout {
+        spacing: 0
+
+        RowLayout {
+            Controls.TextField {
+                id: searchField
+                Layout.fillWidth: true
+                placeholderText: i18n("Filter by title or author…")
+                text: library.searchQuery
+                onTextChanged: library.searchQuery = text
+            }
+            Controls.BusyIndicator {
+                visible: library.syncing
+                running: library.syncing
+            }
+        }
+        Kirigami.InlineMessage {
+            Layout.fillWidth: true
+            Layout.margins: Kirigami.Units.smallSpacing
+            visible: library.status.length > 0
+            type: library.syncing ? Kirigami.MessageType.Information
+                                  : Kirigami.MessageType.Warning
+            text: library.status
+        }
+    }
+
+    Kirigami.Dialog {
+        id: addLibraryDialog
+        title: i18n("Add Dropbox library")
+        padding: Kirigami.Units.largeSpacing
+
+        contentItem: ColumnLayout {
+            Controls.Label {
+                text: i18n("Dropbox folder or shared link for a Calibre library.")
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                font.italic: true
+            }
+            Controls.TextField {
+                id: libraryNameField
+                Layout.fillWidth: true
+                placeholderText: i18n("Display name (optional)")
+            }
+            Controls.TextField {
+                id: libraryPathField
+                Layout.fillWidth: true
+                placeholderText: i18n("e.g. /CalibreLibrary")
+            }
+        }
+
+        customFooterActions: [
+            Kirigami.Action {
+                text: i18n("Add library")
+                enabled: library.syncing === false && libraryPathField.text.length > 0
+                onTriggered: {
+                    library.addLibrary(libraryPathField.text, libraryNameField.text)
+                    libraryNameField.clear()
+                    libraryPathField.clear()
+                    addLibraryDialog.close()
+                }
+            }
+        ]
+    }
+
+    Kirigami.Dialog {
+        id: signInDialog
+        title: i18n("Dropbox sign-in")
+        padding: Kirigami.Units.largeSpacing
+
+        contentItem: ColumnLayout {
+            Controls.Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: library.awaitingAuthCode
+                      ? i18n("Paste the code shown by Dropbox in the browser:")
+                      : i18n("A browser tab will open for the Dropbox sign-in.")
+            }
+            Controls.TextField {
+                id: authCodeField
+                visible: library.awaitingAuthCode
+                Layout.fillWidth: true
+                placeholderText: i18n("Authorization code")
+            }
+        }
+
+        customFooterActions: [
+            Kirigami.Action {
+                text: library.awaitingAuthCode ? i18n("Continue") : i18n("Open browser")
+                onTriggered: {
+                    if (library.awaitingAuthCode) {
+                        library.submitAuthCode(authCodeField.text)
+                        authCodeField.clear()
+                        signInDialog.close()
+                    } else {
+                        // Keep the dialog open: it switches to the
+                        // code-entry form once Dropbox asks for a code.
+                        library.signIn()
+                    }
+                }
+            }
+        ]
     }
 
     GridView {
@@ -120,14 +215,15 @@ Kirigami.Page {
                   ? i18n("No library configured")
                   : i18n("No books found")
             explanation: !library.hasLibrary
-                  ? i18n("Add a Dropbox Calibre library first.")
+                  ? (library.signedIn
+                     ? i18n("Add a Dropbox Calibre library to get started.")
+                     : i18n("Sign in to Dropbox first, then add a Calibre library."))
                   : (library.searchQuery.length
                      ? i18n("Nothing matches the current filter.")
-                     : i18n("Import or download a metadata.db for this library first."))
-            helpfulAction: Kirigami.Action {
-                text: i18n("Open developer tools")
-                onTriggered: pageStack.push(Qt.resolvedUrl("DevPage.qml"))
-            }
+                     : i18n("Syncing may still be running, or the library is empty."))
+            helpfulAction: library.signedIn
+                ? root.addLibraryAction
+                : root.signInAction
         }
     }
 }

@@ -16,21 +16,20 @@ Kirigami.ApplicationWindow {
 
         actions: [
             Kirigami.Action {
-                text: i18n("Libraries")
-                icon.name: "view-list"
+                text: library.signedIn ? i18n("Sign out of Dropbox") : i18n("Sign in to Dropbox")
+                icon.name: library.signedIn ? "network-disconnect" : "network-connect"
+                onTriggered: {
+                    if (library.signedIn)
+                        library.signOut()
+                    else
+                        library.signIn()
+                }
             },
             Kirigami.Action {
-                text: i18n("Add library")
-                icon.name: "list-add"
-            },
-            Kirigami.Action {
-                text: i18n("Settings")
-                icon.name: "settings-configure"
-            },
-            Kirigami.Action {
-                text: i18n("Developer testing")
-                icon.name: "applications-development"
-                onTriggered: pageStack.push(Qt.resolvedUrl("DevPage.qml"))
+                text: i18n("Sync library")
+                icon.name: "view-refresh"
+                enabled: library.hasLibrary && !library.syncing
+                onTriggered: library.syncLibrary()
             }
         ]
     }

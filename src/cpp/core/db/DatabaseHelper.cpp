@@ -3,6 +3,7 @@
 #include "core/text/TextNormalization.h"
 
 #include <QChar>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -116,8 +117,11 @@ QList<Book> DatabaseHelper::getBooks(const QString &libraryId)
         return books;
 
     QSqlQuery query(connectionFor(libraryId));
-    if (!query.exec(QString::fromLatin1(getAllBookDetailsQuery)))
+    if (!query.exec(QString::fromLatin1(getAllBookDetailsQuery))) {
+        qWarning() << "getBooks query failed:"
+                   << query.lastError().text();
         return books;
+    }
 
     while (query.next()) {
         Book book;
