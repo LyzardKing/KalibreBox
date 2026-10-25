@@ -11,6 +11,7 @@ class QSettings;
 
 namespace KalibreBox {
 
+class DropboxClient;
 class LibraryRepository;
 
 /**
@@ -26,7 +27,7 @@ class DevController : public QObject
     Q_PROPERTY(bool awaitingAuthCode READ awaitingAuthCode NOTIFY awaitingAuthCodeChanged)
 
 public:
-    explicit DevController(QSettings *settings, QObject *parent = nullptr);
+    explicit DevController(DropboxClient *client, QObject *parent = nullptr);
 
     bool signedIn() const;
     QString status() const;
@@ -63,7 +64,6 @@ private:
     LibraryRepository *m_repository = nullptr;
     DropboxClient *m_client = nullptr;
     QString m_status;
-    bool m_awaitingAuthCode = false;
-};
+    bool m_awaitingAuthCode = false;};
 
 }

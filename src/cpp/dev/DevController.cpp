@@ -10,14 +10,11 @@
 
 namespace KalibreBox {
 
-DevController::DevController(QSettings *settings, QObject *parent)
+DevController::DevController(DropboxClient *client, QObject *parent)
     : QObject(parent)
 {
-    m_repository = new LibraryRepository(settings);
-    m_client = new DropboxClient(settings, this);
-
-    if (const std::optional<DropboxCredential> saved = DropboxCredential::load(settings))
-        m_client->setCredential(*saved);
+    m_client = client;
+    m_repository = new LibraryRepository();
 
     DropboxAuthProvider *auth = m_client->authProvider();
     connect(auth, &DropboxAuthProvider::authSucceeded, this, [this](const DropboxCredential &) {

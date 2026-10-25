@@ -35,18 +35,6 @@ Kirigami.ApplicationWindow {
         ]
     }
 
-    pageStack.initialPage: Kirigami.Page {
-        title: i18n("Library")
-
-        actions: [
-            Kirigami.Action {
-                icon.name: "edit-find"
-                text: i18n("Search")
-            },
-            Kirigami.Action {
-                icon.name: "view-sort-descending"
-                text: i18n("Sort")
-            }
-        ]
+    pageStack.initialPage: LibraryPage {
     }
 }

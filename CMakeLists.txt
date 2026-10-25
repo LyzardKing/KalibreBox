@@ -26,6 +26,8 @@ set(KALIBREBOX_CORE_SOURCES
     src/cpp/core/model/Library.cpp
     src/cpp/core/text/TextNormalization.cpp
     src/cpp/dev/DevController.cpp
+    src/cpp/ui/BookListModel.cpp
+    src/cpp/ui/LibraryController.cpp
 )
 
 # Dropbox app key (PKCE flow needs no secret). Read from local.properties, a
@@ -72,6 +74,7 @@ qt_add_qml_module(kalibrebox
     QML_FILES
         src/qml/Main.qml
         src/qml/DevPage.qml
+        src/qml/LibraryPage.qml
 )
 
 target_link_libraries(kalibrebox PRIVATE
