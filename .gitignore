@@ -3,6 +3,9 @@ build*/
 .qtc_clangd/
 CMakeLists.txt.user*
 
+# Secrets (Dropbox app key etc.)
+local.properties
+
 # CMake
 CMakeCache.txt
 CMakeFiles/
