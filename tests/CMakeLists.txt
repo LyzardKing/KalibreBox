@@ -15,3 +15,15 @@ add_test(NAME tst_librarymodel COMMAND tst_librarymodel)
 qt_add_executable(tst_textnormalization tst_textnormalization.cpp)
 target_link_libraries(tst_textnormalization PRIVATE kalibreboxcore Qt6::Test)
 add_test(NAME tst_textnormalization COMMAND tst_textnormalization)
+
+qt_add_executable(tst_dropboxurls tst_dropboxurls.cpp)
+target_link_libraries(tst_dropboxurls PRIVATE kalibreboxcore Qt6::Test)
+add_test(NAME tst_dropboxurls COMMAND tst_dropboxurls)
+
+qt_add_executable(tst_dropboxcredential tst_dropboxcredential.cpp)
+target_link_libraries(tst_dropboxcredential PRIVATE kalibreboxcore Qt6::Test)
+add_test(NAME tst_dropboxcredential COMMAND tst_dropboxcredential)
+
+qt_add_executable(tst_pkce tst_pkce.cpp)
+target_link_libraries(tst_pkce PRIVATE kalibreboxcore Qt6::Test)
+add_test(NAME tst_pkce COMMAND tst_pkce)

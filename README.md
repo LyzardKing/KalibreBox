@@ -8,11 +8,12 @@ A Qt/KDE rewrite of [CalibreBoxNew](https://github.com/galileo/CalibreBoxNew) â€
 
 Early development. Target: Linux desktop first, Android later.
 
-- [ ] Data layer (SQLite, Calibre `metadata.db` schema)
-- [x] Dropbox client (OAuth 2 + PKCE, token refresh, list/search/download/upload)
-- [ ] Book details / send-to-Kobo
-- [x] Kirigami UI (library, file browser, library management)
-- [x] Flatpak packaging
+- [x] Data layer (SQLite, Calibre `metadata.db` schema)
+- [x] Dropbox client (OAuth 2 + PKCE with token refresh, list folder, get metadata,
+      file download incl. shared links, copy-to-folder for send-to-Kobo, delete)
+- [ ] UI (Kirigami app shell running, feature pages pending)
+- [ ] Book details / send-to-Kobo integration
+- [ ] Flatpak packaging
 - [ ] Android port
 
 ## Requirements

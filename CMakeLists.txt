@@ -18,13 +18,36 @@ enable_testing()
 set(KALIBREBOX_CORE_SOURCES
     src/cpp/core/data/LibraryRepository.cpp
     src/cpp/core/db/DatabaseHelper.cpp
+    src/cpp/core/dropbox/DropboxAuthProvider.cpp
+    src/cpp/core/dropbox/DropboxClient.cpp
+    src/cpp/core/dropbox/DropboxCredential.cpp
+    src/cpp/core/dropbox/DropboxUrls.cpp
+    src/cpp/core/dropbox/Pkce.cpp
     src/cpp/core/model/Library.cpp
     src/cpp/core/text/TextNormalization.cpp
 )
 
+# Dropbox app key (PKCE flow needs no secret). Read from local.properties, a
+# gitignored file next to this CMakeLists.
+set(DROPBOX_APP_KEY "")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/local.properties")
+    file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/local.properties" _dropbox_props)
+    foreach(_prop_line IN LISTS _dropbox_props)
+        if(_prop_line MATCHES "^dropbox.key=(.*)$")
+            set(DROPBOX_APP_KEY "${CMAKE_MATCH_1}")
+        endif()
+    endforeach()
+endif()
+string(LENGTH "${DROPBOX_APP_KEY}" DROPBOX_APP_KEY_LENGTH)
+message(STATUS "Dropbox app key: ${DROPBOX_APP_KEY_LENGTH} characters")
+
 qt_add_library(kalibreboxcore STATIC ${KALIBREBOX_CORE_SOURCES})
 target_include_directories(kalibreboxcore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp)
-target_link_libraries(kalibreboxcore PUBLIC Qt6::Core Qt6::Sql)
+target_link_libraries(kalibreboxcore PUBLIC Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network)
+if(DROPBOX_APP_KEY)
+    target_compile_definitions(kalibreboxcore PRIVATE
+        KALIBREBOX_DROPBOX_APP_KEY="${DROPBOX_APP_KEY}")
+endif()
 
 qt_add_executable(kalibrebox
     src/cpp/main.cpp
