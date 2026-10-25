@@ -3,6 +3,10 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
+#include <QSettings>
+
+#include "core/dropbox/DropboxClient.h"
+#include "dev/DevController.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,10 +17,14 @@ int main(int argc, char *argv[])
 
     QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
 
+    QSettings settings;
+
     QQmlApplicationEngine engine;
     auto *localization = new KLocalizedContext(&engine);
     localization->setTranslationDomain(QStringLiteral("kalibrebox"));
     engine.rootContext()->setContextObject(localization);
+    engine.rootContext()->setContextProperty(
+        QStringLiteral("dev"), new KalibreBox::DevController(&settings, &engine));
 
     QObject::connect(
         &engine,

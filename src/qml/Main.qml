@@ -26,6 +26,11 @@ Kirigami.ApplicationWindow {
             Kirigami.Action {
                 text: i18n("Settings")
                 icon.name: "settings-configure"
+            },
+            Kirigami.Action {
+                text: i18n("Developer testing")
+                icon.name: "applications-development"
+                onTriggered: pageStack.push(Qt.resolvedUrl("DevPage.qml"))
             }
         ]
     }
