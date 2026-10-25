@@ -22,13 +22,21 @@ DevController::DevController(QSettings *settings, QObject *parent)
     DropboxAuthProvider *auth = m_client->authProvider();
     connect(auth, &DropboxAuthProvider::authSucceeded, this, [this](const DropboxCredential &) {
         m_status = QStringLiteral("Signed in to Dropbox.");
+        m_awaitingAuthCode = false;
+        emit awaitingAuthCodeChanged();
         emit statusChanged();
         emit signedInChanged();
     });
     connect(auth, &DropboxAuthProvider::authFailed, this, [this](const QString &message) {
         m_status = QStringLiteral("Sign-in failed: %1").arg(message);
+        m_awaitingAuthCode = false;
+        emit awaitingAuthCodeChanged();
         emit statusChanged();
         emit signedInChanged();
+    });
+    connect(auth, &DropboxAuthProvider::codeRequested, this, [this]() {
+        m_awaitingAuthCode = true;
+        emit awaitingAuthCodeChanged();
     });
 }
 
@@ -43,11 +51,21 @@ QString DevController::status() const
     return m_status;
 }
 
+bool DevController::awaitingAuthCode() const
+{
+    return m_awaitingAuthCode;
+}
+
 void DevController::startSignIn()
 {
-    m_status = QStringLiteral("Waiting for browser sign-in …");
+    m_status = QStringLiteral("Opening Dropbox in your browser …");
     emit statusChanged();
     m_client->authProvider()->startLogin();
+}
+
+void DevController::submitAuthCode(const QString &code)
+{
+    m_client->authProvider()->completeDirectSignIn(code);
 }
 
 void DevController::signOut()

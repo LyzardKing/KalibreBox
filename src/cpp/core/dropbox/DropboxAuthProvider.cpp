@@ -68,6 +68,17 @@ QString generateState()
     return QString::fromUtf8(raw.toHex());
 }
 
+// TODO(oauth): revisit the sign-in flows when Android support is added.
+// - Desktop "code" mode relies on the user copy-pasting the shown code, which
+//   is the only zero-configuration option, but is clumsy UX.
+// - Desktop "loopback" mode requires pre-registering http://127.0.0.1:<port>/callback
+//   per device-relevant port (single shared port).
+// - Android gets the much nicer flow the Kotlin app already used: the Dropbox
+//   SDK's implicit db-<appkey>:// redirect scheme, whitelisted by Dropbox
+//   without App Console setup. When porting, either drive the Android SDK via
+//   JNI or replicate that scheme with an intent-filter, and make the mode
+//   selection platform-dependent instead of user-configured.
+
 void respondAndClose(QTcpSocket *socket, const char *response)
 {
     socket->write(response);
@@ -138,8 +149,24 @@ void DropboxAuthProvider::startLogin()
     cancelLogin();
     m_authenticating = true;
     m_pkce = Pkce::generate();
-    m_state = generateState();
 
+    // Abort the whole flow if it is never completed.
+    QTimer::singleShot(loginTimeoutMs, this, [this]() {
+        if (m_authenticating) {
+            cancelLogin();
+            emit authFailed(QStringLiteral(
+                "Authorization timed out. Please try again."));
+        }
+    });
+
+    if (oauthMode() == QStringLiteral("loopback"))
+        startLoopbackLogin();
+    else
+        startDirectCodeLogin();
+}
+
+void DropboxAuthProvider::startLoopbackLogin()
+{
     m_redirectServer = new QTcpServer(this);
     // The port is registered in the Dropbox App Console, so only this one
     // port may be used (changing it would break the exact redirect_uri match).
@@ -156,15 +183,7 @@ void DropboxAuthProvider::startLogin()
     }
     m_redirectUri =
         QStringLiteral("http://127.0.0.1:%1/callback").arg(m_redirectServer->serverPort());
-
-    // Abort the whole flow if the user never returns from the browser.
-    QTimer::singleShot(loginTimeoutMs, this, [this]() {
-        if (m_authenticating) {
-            cancelLogin();
-            emit authFailed(QStringLiteral(
-                "Authorization timed out. Please try again."));
-        }
-    });
+    m_state = generateState();
 
     connect(m_redirectServer, &QTcpServer::newConnection, this, [this]() {
         while (m_redirectServer && m_redirectServer->hasPendingConnections()) {
@@ -247,6 +266,71 @@ void DropboxAuthProvider::startLogin()
     QDesktopServices::openUrl(url);
 }
 
+void DropboxAuthProvider::startDirectCodeLogin()
+{
+    m_directCodeMode = true;
+
+    // No redirect_uri: Dropbox then displays the authorization code on screen
+    // for the user to copy and paste into the app. This is what makes sign-in
+    // possible without any pre-registered redirect URI.
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("response_type"), QStringLiteral("code"));
+    query.addQueryItem(QStringLiteral("client_id"), appKey());
+    query.addQueryItem(QStringLiteral("code_challenge"), m_pkce->challenge);
+    query.addQueryItem(QStringLiteral("code_challenge_method"), QStringLiteral("S256"));
+    query.addQueryItem(QStringLiteral("token_access_type"), QStringLiteral("offline"));
+
+    QUrl url(authorizeEndpoint);
+    url.setQuery(query);
+    QDesktopServices::openUrl(url);
+    emit codeRequested();
+}
+
+void DropboxAuthProvider::completeDirectSignIn(const QString &code)
+{
+    if (!m_directCodeMode || !m_pkce) {
+        emit authFailed(QStringLiteral(
+            "No sign-in in progress — press 'Sign in' first."));
+        return;
+    }
+
+    // Accept a bare code or a whole pasted URL/parameter line.
+    QString trimmed = code.trimmed();
+    const int codeIndex = trimmed.indexOf(QStringLiteral("code="));
+    if (codeIndex >= 0) {
+        QString extracted = trimmed.mid(codeIndex + 5);
+        const int amp = extracted.indexOf(u'&');
+        if (amp >= 0)
+            extracted.truncate(amp);
+        extracted = QUrl::fromPercentEncoding(extracted.toUtf8());
+        trimmed = extracted.trimmed();
+    }
+
+    exchangeAuthorizationCode(
+        trimmed, m_pkce->verifier, QStringLiteral(""),
+        [this](std::optional<DropboxCredential>, const QString &exchangeError) {
+            cancelLogin();
+            if (!exchangeError.isEmpty())
+                emit authFailed(exchangeError);
+            // On success exchangeAuthorizationCode already emitted
+            // authSucceeded.
+        });
+}
+
+QString DropboxAuthProvider::oauthMode() const
+{
+    const QString env = qEnvironmentVariable("KALIBREBOX_DROPBOX_OAUTH_MODE");
+    if (!env.isEmpty() && (env == QLatin1String("code") || env == QLatin1String("loopback")))
+        return env;
+    if (m_settings) {
+        const QString fromSettings =
+            m_settings->value(QStringLiteral("DropboxPrefs/oauth_mode")).toString();
+        if (fromSettings == QLatin1String("code") || fromSettings == QLatin1String("loopback"))
+            return fromSettings;
+    }
+    return QStringLiteral("code");
+}
+
 void DropboxAuthProvider::cancelListening()
 {
     if (m_redirectServer) {
@@ -262,6 +346,7 @@ void DropboxAuthProvider::cancelLogin()
     m_pkce.reset();
     m_state.clear();
     m_redirectUri.clear();
+    m_directCodeMode = false;
     m_authenticating = false;
 }
 
@@ -273,7 +358,10 @@ void DropboxAuthProvider::exchangeAuthorizationCode(
     params.addQueryItem(QStringLiteral("code"), code);
     params.addQueryItem(QStringLiteral("grant_type"), QStringLiteral("authorization_code"));
     params.addQueryItem(QStringLiteral("client_id"), appKey());
-    params.addQueryItem(QStringLiteral("redirect_uri"), redirectUri);
+    // An empty redirectUri (direct-code flow) is intentionally omitted:
+    // Dropbox requires the exchange to mirror the authorize parameters.
+    if (!redirectUri.isEmpty())
+        params.addQueryItem(QStringLiteral("redirect_uri"), redirectUri);
     params.addQueryItem(QStringLiteral("code_verifier"), codeVerifier);
     const QByteArray body = params.query(QUrl::FullyEncoded).toUtf8();
 

@@ -108,6 +108,34 @@ Kirigami.Page {
                     onClicked: dev.signOut()
                 }
             }
+            Column {
+                width: parent.width
+                spacing: Kirigami.Units.smallSpacing
+                visible: dev.awaitingAuthCode
+                Controls.Label {
+                    width: parent.width
+                    wrapMode: Text.WordWrap
+                    text: i18n(
+                        "A web page just opened in your browser and shows an "
+                            + "authorization code at the top. Copy it and paste it "
+                            + "below, then press 'Submit code'.")
+                }
+                Row {
+                    spacing: Kirigami.Units.smallSpacing
+                    Controls.TextField {
+                        id: authCodeInput
+                        width: 2 * Kirigami.Units.gridUnit * 10
+                        placeholderText: i18n("Paste the authorization code here")
+                    }
+                    Controls.Button {
+                        text: i18n("Submit code")
+                        onClicked: {
+                            dev.submitAuthCode(authCodeInput.text)
+                            authCodeInput.clear()
+                        }
+                    }
+                }
+            }
             Flow {
                 width: parent.width
                 spacing: Kirigami.Units.smallSpacing

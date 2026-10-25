@@ -20,10 +20,15 @@ namespace KalibreBox {
 /**
  * Desktop OAuth 2.0 + PKCE flow for Dropbox (token_access_type=offline).
  *
- * startLogin() opens the system browser, listens on a loopback port for the
- * OAuth redirect, validates the state, exchanges the authorization code and
- * emits authSucceeded() / authFailed(). Tokens can also be refreshed later
- * without user interaction.
+ * Two modes:
+ * - "code" (default): the browser shows the authorization code on screen and
+ *   the user pastes it into the app — no pre-registered redirect URI needed.
+ *   Finish with completeDirectSignIn().
+ * - "loopback": the app listens on the registered port
+ *   (http://127.0.0.1:<port>/callback), receives the redirect automatically
+ *   and exchanges the code on its own.
+ *
+ * Tokens can always be refreshed later without user interaction.
  */
 class DropboxAuthProvider : public QObject
 {
@@ -37,6 +42,9 @@ public:
     QString appKey() const;
     void setAppKey(const QString &appKey);
 
+    /// Resolved OAuth mode: "code" (default) or "loopback".
+    QString oauthMode() const;
+
     const std::optional<DropboxCredential> &credential() const { return m_credential; }
     void setCredential(const DropboxCredential &credential);
     void logout();
@@ -45,6 +53,9 @@ public:
 
     void startLogin();
     void cancelLogin();
+
+    /// "code" mode: submits the code the user copied from the browser page.
+    void completeDirectSignIn(const QString &code);
 
     /// Exchanges an authorization code for tokens (exposed for tests/tools).
     void exchangeAuthorizationCode(const QString &code, const QString &codeVerifier,
@@ -63,9 +74,12 @@ public:
 signals:
     void authSucceeded(const KalibreBox::DropboxCredential &credential);
     void authFailed(const QString &message);
+    /// "code" mode: the browser page with the authorization code is open.
+    void codeRequested();
 
 private:
-    QString tokenEndpoint() const;
+    void startLoopbackLogin();
+    void startDirectCodeLogin();
 
     std::optional<DropboxCredential> m_credential;
     QSettings *m_settings = nullptr;
@@ -74,6 +88,7 @@ private:
 
     // Login flow state
     bool m_authenticating = false;
+    bool m_directCodeMode = false;
     std::optional<PkceCodes> m_pkce;
     QString m_state;
     QString m_redirectUri;
