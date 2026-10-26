@@ -1,9 +1,11 @@
 #include "core/dropbox/DropboxAuthProvider.h"
 
 #include <QDateTime>
+#include <QDebug>
 #include <QDesktopServices>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPointer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
@@ -18,6 +20,14 @@
 namespace KalibreBox {
 
 namespace {
+
+// Lets the Android intent side (JNI) find the provider instance that is
+// currently in the middle of a native sign-in.
+QVector<QPointer<DropboxAuthProvider>> &providerRegistry()
+{
+    static QVector<QPointer<DropboxAuthProvider>> registry;
+    return registry;
+}
 
 // 10 minutes to complete the browser flow.
 constexpr int loginTimeoutMs = 10 * 60 * 1000;
@@ -68,16 +78,6 @@ QString generateState()
     return QString::fromUtf8(raw.toHex());
 }
 
-// TODO(oauth): revisit the sign-in flows when Android support is added.
-// - Desktop "code" mode relies on the user copy-pasting the shown code, which
-//   is the only zero-configuration option, but is clumsy UX.
-// - Desktop "loopback" mode requires pre-registering http://127.0.0.1:<port>/callback
-//   per device-relevant port (single shared port).
-// - Android gets the much nicer flow the Kotlin app already used: the Dropbox
-//   SDK's implicit db-<appkey>:// redirect scheme, whitelisted by Dropbox
-//   without App Console setup. When porting, either drive the Android SDK via
-//   JNI or replicate that scheme with an intent-filter, and make the mode
-//   selection platform-dependent instead of user-configured.
 
 void respondAndClose(QTcpSocket *socket, const char *response)
 {
@@ -93,12 +93,16 @@ DropboxAuthProvider::DropboxAuthProvider(QSettings *settings, QObject *parent)
     , m_settings(settings)
     , m_nam(new QNetworkAccessManager(this))
 {
+    providerRegistry().append(QPointer<DropboxAuthProvider>(this));
 }
 
 DropboxAuthProvider::~DropboxAuthProvider()
 {
+    providerRegistry().removeAll(this);
+    providerRegistry().removeAll(nullptr);
     cancelListening();
 }
+
 
 QString DropboxAuthProvider::appKey() const
 {
@@ -137,6 +141,23 @@ void DropboxAuthProvider::logout()
         DropboxCredential::clear(m_settings);
 }
 
+void DropboxAuthProvider::dispatchAuthRedirect(const QString &url)
+{
+    for (const auto &provider : providerRegistry()) {
+        if (provider) {
+            // Called from the Android UI thread; the provider lives on the Qt thread.
+            QMetaObject::invokeMethod(
+                provider.data(),
+                [provider, url]() {
+                    if (provider)
+                        provider->handleAuthRedirect(QUrl(url));
+                },
+                Qt::QueuedConnection);
+            return;
+        }
+    }
+}
+
 void DropboxAuthProvider::startLogin()
 {
     if (appKey().isEmpty()) {
@@ -159,9 +180,18 @@ void DropboxAuthProvider::startLogin()
         }
     });
 
-    if (oauthMode() == QStringLiteral("loopback"))
+    const QString mode = oauthMode();
+    if (mode == QLatin1String("loopback"))
         startLoopbackLogin();
-    else
+    else if (mode == QLatin1String("native")) {
+#ifdef Q_OS_ANDROID
+        startNativeLogin();
+#else
+        emit authFailed(QStringLiteral(
+            "Native db-<appkey>:// sign-in needs the Android build. Choose the "
+            "code or loopback mode on this platform instead."));
+#endif
+    } else
         startDirectCodeLogin();
 }
 
@@ -317,17 +347,89 @@ void DropboxAuthProvider::completeDirectSignIn(const QString &code)
         });
 }
 
+void DropboxAuthProvider::startNativeLogin()
+{
+    m_nativeMode = true;
+    // Same web flow as the official Dropbox Android SDK: www.dropbox.com/1/connect
+    // redirects to db-<appkey>://1/connect, which is whitelisted for the app's
+    // own key. The PKCE parameters ride along in the state / extra_query_params.
+    m_state = QStringLiteral("oauth2code:%1:S256:offline").arg(m_pkce->challenge);
+    const QString extra = QStringLiteral(
+        "code_challenge=%1&code_challenge_method=S256&token_access_type=offline"
+        "&response_type=code").arg(m_pkce->challenge);
+
+    const QString url = QStringLiteral(
+        "https://www.dropbox.com/1/connect?k=%1&n=0&state=%2&extra_query_params=%3")
+        .arg(appKey(),
+             QString::fromLatin1(QUrl::toPercentEncoding(m_state)),
+             QString::fromLatin1(QUrl::toPercentEncoding(extra)));
+    QDesktopServices::openUrl(QUrl::fromEncoded(url.toLatin1()));
+}
+
+void DropboxAuthProvider::handleAuthRedirect(const QUrl &url)
+{
+    if (!m_authenticating || !m_nativeMode || !m_pkce) {
+        qWarning() << "Dropbox redirect ignored: no native sign-in in progress"
+                   << "(authenticating =" << m_authenticating << "native =" << m_nativeMode << ")";
+        return;
+    }
+    qInfo() << "Dropbox redirect received, exchanging code";
+
+    const QUrlQuery query(url.query());
+    const auto decoded = [&query](const char *key) {
+        return query.queryItemValue(QString::fromLatin1(key), QUrl::FullyDecoded);
+    };
+    const QString tokenType = decoded("oauth_token");
+    const QString code = decoded("oauth_token_secret");
+    const QString state = decoded("state");
+
+    if (tokenType != QLatin1String("oauth2code:") || code.isEmpty() || state != m_state) {
+        QStringList keys;
+        for (const auto &item : query.queryItems())
+            keys << item.first;
+        qWarning().noquote() << "Dropbox redirect rejected: scheme/host/path ="
+                             << url.scheme() << url.host() << url.path()
+                             << "keys =" << keys << "oauth_token =" << tokenType
+                             << "state matches =" << (state == m_state) << "state len ="
+                             << state.size() << "expected len =" << m_state.size()
+                             << "fragment =" << url.fragment().left(40);
+        cancelLogin();
+        emit authFailed(QStringLiteral(
+            "Unexpected authorization response (token type '%1', state %2, "
+            "%3 query items).")
+                            .arg(tokenType, state == m_state ? QStringLiteral("ok") : QStringLiteral("mismatch"))
+                            .arg(keys.size()));
+        return;
+    }
+
+    // The SDK sends no redirect_uri in the exchange either.
+    const QString verifier = m_pkce->verifier;
+    exchangeAuthorizationCode(
+        code, verifier, QString(),
+        [this](std::optional<DropboxCredential>, const QString &exchangeError) {
+            cancelLogin();
+            if (!exchangeError.isEmpty())
+                emit authFailed(exchangeError);
+        });
+}
+
 QString DropboxAuthProvider::oauthMode() const
 {
+    auto isValidMode = [](const QString &mode) {
+        return mode == QLatin1String("code") || mode == QLatin1String("loopback")
+               || mode == QLatin1String("native");
+    };
     const QString env = qEnvironmentVariable("KALIBREBOX_DROPBOX_OAUTH_MODE");
-    if (!env.isEmpty() && (env == QLatin1String("code") || env == QLatin1String("loopback")))
+    if (!env.isEmpty() && isValidMode(env))
         return env;
     if (m_settings) {
         const QString fromSettings =
             m_settings->value(QStringLiteral("DropboxPrefs/oauth_mode")).toString();
-        if (fromSettings == QLatin1String("code") || fromSettings == QLatin1String("loopback"))
+        if (isValidMode(fromSettings))
             return fromSettings;
     }
+    // Copy-the-code flow on every platform; the native db-<appkey>:// flow is
+    // opt-in (oauth_mode=native) because the redirect was unreliable.
     return QStringLiteral("code");
 }
 
@@ -347,6 +449,7 @@ void DropboxAuthProvider::cancelLogin()
     m_state.clear();
     m_redirectUri.clear();
     m_directCodeMode = false;
+    m_nativeMode = false;
     m_authenticating = false;
 }
 
@@ -375,6 +478,7 @@ void DropboxAuthProvider::exchangeAuthorizationCode(
         const int statusCode =
             reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const QByteArray payload = reply->readAll();
+        qInfo() << "Dropbox token exchange finished, HTTP" << statusCode << reply->errorString();
         if (statusCode != 200) {
             callback(std::nullopt,
                      QStringLiteral("Token exchange failed (HTTP %1): %2")

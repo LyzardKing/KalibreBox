@@ -50,6 +50,24 @@ cmake --build build -j$(nproc)
 ./build/kalibrebox
 ```
 
+## Build for Android
+
+Inside the container, check that the blueprint is mounted:
+
+
+Then add /home/user/KalibreBox/craft to the Locations setting in ~/CraftRoot/etc/CraftSettings.ini under [Blueprints]. Keep any existing locations and add this path to them rather than replacing them. After that, run:
+
+Check the upstream Craft docs for any updates on Android builds.
+https://develop.kde.org/docs/packaging/android/building_applications/
+
+Notes:
+
+- The OAuth flow used by default (paste-the-code, no redirect URI) works on
+  Android too, but revisit `db-<appkey>://` intent-filter sign-in in
+  `android/AndroidManifest.xml` in a later pass (see `PHASES.md`, phase 6).
+- The Dropbox app key comes from `local.properties` baked in at configure time;
+  the same QSettings/env overrides as on desktop apply at runtime.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

@@ -16,7 +16,13 @@ int main(int argc, char *argv[])
     QGuiApplication::setApplicationName(QStringLiteral("KalibreBox"));
     QGuiApplication::setApplicationVersion(KALIBREBOX_VERSION);
 
-    QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
+    if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
+#ifdef Q_OS_ANDROID
+        QQuickStyle::setStyle(QStringLiteral("org.kde.breeze"));
+#else
+        QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
+#endif
+    }
 
     QSettings settings;
 

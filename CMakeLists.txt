@@ -13,8 +13,6 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Sql N
 find_package(KF6I18n REQUIRED)
 qt_standard_project_setup(REQUIRES 6.8)
 
-enable_testing()
-
 set(KALIBREBOX_CORE_SOURCES
     src/cpp/core/data/LibraryRepository.cpp
     src/cpp/core/db/DatabaseHelper.cpp
@@ -63,6 +61,13 @@ qt_add_executable(kalibrebox
     src/cpp/main.cpp
 )
 
+if(ANDROID)
+    # Java→C++ routing of the db-<appkey>:// OAuth redirect. Must be part of the
+    # app library itself: in the static core library nothing references the
+    # JNI symbol, so the linker would drop it.
+    target_sources(kalibrebox PRIVATE src/cpp/core/dropbox/DropboxAuthJni.cpp)
+endif()
+
 target_compile_definitions(kalibrebox PRIVATE
     KALIBREBOX_VERSION="${PROJECT_VERSION}"
 )
@@ -86,9 +91,54 @@ target_link_libraries(kalibrebox PRIVATE
     KF6::I18n
 )
 
-add_subdirectory(tests)
+if(ANDROID)
+    # The manifest is generated so the native OAuth scheme (db-<appkey>://)
+    # and, later, other placeholders come from local.properties. Java sources
+    # under android/src are compiled by androiddeployqt from this directory.
+    set(ANDROID_PKG_DIR "${CMAKE_BINARY_DIR}/android-pkg")
+    if(DROPBOX_APP_KEY)
+        set(APP_URL_SCHEME "db-${DROPBOX_APP_KEY}")
+    else()
+        set(APP_URL_SCHEME "db-appkey-not-configured")
+    endif()
+    # KDE Frameworks install their QML modules to <prefix>/lib/qml, not Qt's
+    # <prefix>/qml, so androiddeployqt only bundles Kirigami and the Breeze
+    # style if that directory is an explicit QML import path (same as
+    # ECMAddAndroidApk). Without it the app exits right after start-up.
+    set(_kde_prefixes ${CMAKE_FIND_ROOT_PATH} ${CMAKE_PREFIX_PATH})
+    list(REMOVE_DUPLICATES _kde_prefixes)
+    foreach(_prefix IN LISTS _kde_prefixes)
+        # qmlimportscanner chokes on symlinks.
+        file(REAL_PATH "${_prefix}/lib/qml" _kde_qml_dir)
+        if(IS_DIRECTORY "${_kde_qml_dir}")
+            set_property(TARGET kalibrebox APPEND PROPERTY QT_QML_IMPORT_PATH "${_kde_qml_dir}")
+        endif()
+    endforeach()
+    file(MAKE_DIRECTORY "${ANDROID_PKG_DIR}")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml.in"
+        "${ANDROID_PKG_DIR}/AndroidManifest.xml" @ONLY)
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/android/src"
+         DESTINATION "${ANDROID_PKG_DIR}")
+    set_target_properties(kalibrebox PROPERTIES
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${ANDROID_PKG_DIR}"
+        QT_ANDROID_PACKAGE_NAME "io.github.kalibrebox"
+        QT_ANDROID_VERSION_CODE 1
+        QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
+    )
+endif()
 
-install(TARGETS kalibrebox ${KDE_INSTALL_TARGETS_DEFAULT_ARGS})
+if(NOT ANDROID)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+install(TARGETS kalibrebox
+    RUNTIME DESTINATION bin
+    BUNDLE DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+)
 
 include(FeatureSummary)
 feature_summary(WHAT ALL)

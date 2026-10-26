@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:label="KalibreBox"
+        android:allowBackup="true"
+        android:hardwareAccelerated="true">
+
+        <activity
+            android:name="io.github.kalibrebox.MainActivity"
+            android:label="KalibreBox"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode|keyboard|keyboardHidden|navigation"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Implicit OAuth: the browser redirects the token to the app's
+                 own db-<appkey>:// scheme (whitelisted by Dropbox with no App
+                 Console registration). The scheme is injected at CMake
+                 configure time from local.properties (dropbox.key). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@APP_URL_SCHEME@" />
+            </intent-filter>
+
+            <!-- Replaced by androiddeployqt with the app's deps/libs. -->
+            <meta-data android:name="android.app.lib_name" android:value="kalibrebox" />
+        </activity>
+    </application>
+</manifest>
