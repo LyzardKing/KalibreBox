@@ -23,7 +23,3 @@ add_test(NAME tst_dropboxurls COMMAND tst_dropboxurls)
 qt_add_executable(tst_dropboxcredential tst_dropboxcredential.cpp)
 target_link_libraries(tst_dropboxcredential PRIVATE kalibreboxcore Qt6::Test)
 add_test(NAME tst_dropboxcredential COMMAND tst_dropboxcredential)
-
-qt_add_executable(tst_pkce tst_pkce.cpp)
-target_link_libraries(tst_pkce PRIVATE kalibreboxcore Qt6::Test)
-add_test(NAME tst_pkce COMMAND tst_pkce)

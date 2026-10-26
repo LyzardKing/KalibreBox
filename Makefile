@@ -5,6 +5,7 @@ build:
 build-android:
 	rm -rf /home/user/CraftRoot/tmp/android-arm64-toolchain
 	craft --clean apps/kalibrebox
+	craft --install-deps apps/kalibrebox
 	craft --options apps/kalibrebox.srcDir=/home/user/KalibreBox \
 	--configure --make --package apps/kalibrebox
 

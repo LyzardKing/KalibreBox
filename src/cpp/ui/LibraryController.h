@@ -9,6 +9,7 @@
 #include <QObject>
 #include <QSet>
 #include <QString>
+#include <QTimer>
 #include <QUrl>
 #include <functional>
 
@@ -89,6 +90,8 @@ private:
     QString coverPath(const QString &libraryId, qlonglong bookId) const;
     void requestCover(qlonglong bookId, const Book &book);
     void setStatus(const QString &status);
+    // Shows a message that clears itself after a few seconds.
+    void setTransientStatus(const QString &status);
     void setupAuthConnections();
     void setBusy(bool busy);
     void downloadMetadata(const std::optional<Library> &library);
@@ -113,6 +116,7 @@ private:
     std::optional<qlonglong> m_currentBookId;
 
     QString m_status;
+    QTimer m_statusTimer;
     bool m_syncing = false;
     bool m_busy = false;
     bool m_awaitingAuthCode = false;

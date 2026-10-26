@@ -63,8 +63,7 @@ https://develop.kde.org/docs/packaging/android/building_applications/
 Notes:
 
 - The OAuth flow used by default (paste-the-code, no redirect URI) works on
-  Android too, but revisit `db-<appkey>://` intent-filter sign-in in
-  `android/AndroidManifest.xml` in a later pass (see `PHASES.md`, phase 6).
+  Android too. Auth uses Qt Network Authorization (`QOAuth2AuthorizationCodeFlow`).
 - The Dropbox app key comes from `local.properties` baked in at configure time;
   the same QSettings/env overrides as on desktop apply at runtime.
 

@@ -25,6 +25,9 @@ LibraryController::LibraryController(DropboxClient *client, QObject *parent)
     , m_repository(new LibraryRepository())
     , m_model(new BookListModel(this))
 {
+    m_statusTimer.setSingleShot(true);
+    m_statusTimer.setInterval(4000);
+    connect(&m_statusTimer, &QTimer::timeout, this, [this] { setStatus(QString()); });
     // Cover downloads are disabled for now: hasCover is only reported
     // when a cover is actually available locally (m_coverUrls).
     setupAuthConnections();
@@ -46,7 +49,7 @@ void LibraryController::setupAuthConnections()
         m_awaitingAuthCode = false;
         emit awaitingAuthCodeChanged();
         emit signedInChanged();
-        setStatus(QStringLiteral("Signed in to Dropbox."));
+        setTransientStatus(QStringLiteral("Signed in to Dropbox."));
         if (hasLibrary())
             syncLibrary();
     });
@@ -123,8 +126,15 @@ void LibraryController::setSortOrder(int order)
     refresh();
 }
 
+void LibraryController::setTransientStatus(const QString &status)
+{
+    setStatus(status);
+    m_statusTimer.start();
+}
+
 void LibraryController::setStatus(const QString &status)
 {
+    m_statusTimer.stop();
     if (status == m_status)
         return;
     m_status = status;
@@ -208,7 +218,7 @@ void LibraryController::syncLibrary()
                     << QStringLiteral("metadata.db unchanged; skipping download.")
                            .arg(current->id);
                 DatabaseHelper::openLibrary(current->id);
-                setStatus(QStringLiteral("Library up to date."));
+                setTransientStatus(QStringLiteral("Library up to date."));
                 m_syncing = false;
                 emit syncingChanged();
                 refresh();
@@ -267,7 +277,7 @@ void LibraryController::downloadMetadata(const std::optional<Library> &library)
             qCInfo(kalibreboxCore).noquote()
                 << QStringLiteral("Library synced: %1 bytes -> %2")
                        .arg(QString::number(metadata->size), target);
-            setStatus(QStringLiteral("Library synced."));
+            setTransientStatus(QStringLiteral("Library synced."));
             refresh();
         });
 }
@@ -288,7 +298,7 @@ void LibraryController::addLibrary(const QString &nameOrPath, const QString &nam
         library.sharedLinkUrl = nameOrPath.trimmed();
 
     if (m_repository->addLibrary(library))
-        setStatus(QStringLiteral("Added library '%1'.").arg(library.name));
+        setTransientStatus(QStringLiteral("Added library '%1'.").arg(library.name));
     else
         setStatus(QStringLiteral("A library with path %1 already exists.").arg(path));
     emit libraryChanged();
@@ -304,7 +314,7 @@ void LibraryController::removeCurrentLibrary()
     }
     if (m_repository->removeLibrary(currentId)) {
         DatabaseHelper::clearDatabase(currentId);
-        setStatus(QStringLiteral("Removed library."));
+        setTransientStatus(QStringLiteral("Removed library."));
     }
     emit libraryChanged();
     refresh();
@@ -319,7 +329,7 @@ void LibraryController::signIn()
 void LibraryController::signOut()
 {
     m_client->logout();
-    setStatus(QStringLiteral("Signed out."));
+    setTransientStatus(QStringLiteral("Signed out."));
     emit signedInChanged();
 }
 
@@ -427,7 +437,7 @@ void LibraryController::saveFormat(qlonglong bookId, const QString &bookPath,
                 setStatus(QStringLiteral("Could not download %1: %2").arg(cleanName, error));
                 return;
             }
-            setStatus(QStringLiteral("Saved: %1").arg(target));
+            setTransientStatus(QStringLiteral("Saved: %1").arg(target));
         });
 }
 

@@ -9,7 +9,7 @@ project(KalibreBox
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Sql Network)
+find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Sql Network NetworkAuth)
 find_package(KF6I18n REQUIRED)
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -20,7 +20,6 @@ set(KALIBREBOX_CORE_SOURCES
     src/cpp/core/dropbox/DropboxClient.cpp
     src/cpp/core/dropbox/DropboxCredential.cpp
     src/cpp/core/dropbox/DropboxUrls.cpp
-    src/cpp/core/dropbox/Pkce.cpp
     src/cpp/core/model/Library.cpp
     src/cpp/core/text/TextNormalization.cpp
     src/cpp/ui/BookListModel.cpp
@@ -47,7 +46,7 @@ message(STATUS "Dropbox OAuth port: ${DROPBOX_OAUTH_PORT}")
 
 qt_add_library(kalibreboxcore STATIC ${KALIBREBOX_CORE_SOURCES})
 target_include_directories(kalibreboxcore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp)
-target_link_libraries(kalibreboxcore PUBLIC Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network)
+target_link_libraries(kalibreboxcore PUBLIC Qt6::Core Qt6::Gui Qt6::Sql Qt6::Network Qt6::NetworkAuth)
 if(DROPBOX_APP_KEY)
     target_compile_definitions(kalibreboxcore PRIVATE
         KALIBREBOX_DROPBOX_APP_KEY="${DROPBOX_APP_KEY}")
@@ -60,13 +59,6 @@ endif()
 qt_add_executable(kalibrebox
     src/cpp/main.cpp
 )
-
-if(ANDROID)
-    # Java→C++ routing of the db-<appkey>:// OAuth redirect. Must be part of the
-    # app library itself: in the static core library nothing references the
-    # JNI symbol, so the linker would drop it.
-    target_sources(kalibrebox PRIVATE src/cpp/core/dropbox/DropboxAuthJni.cpp)
-endif()
 
 target_compile_definitions(kalibrebox PRIVATE
     KALIBREBOX_VERSION="${PROJECT_VERSION}"
@@ -92,15 +84,6 @@ target_link_libraries(kalibrebox PRIVATE
 )
 
 if(ANDROID)
-    # The manifest is generated so the native OAuth scheme (db-<appkey>://)
-    # and, later, other placeholders come from local.properties. Java sources
-    # under android/src are compiled by androiddeployqt from this directory.
-    set(ANDROID_PKG_DIR "${CMAKE_BINARY_DIR}/android-pkg")
-    if(DROPBOX_APP_KEY)
-        set(APP_URL_SCHEME "db-${DROPBOX_APP_KEY}")
-    else()
-        set(APP_URL_SCHEME "db-appkey-not-configured")
-    endif()
     # KDE Frameworks install their QML modules to <prefix>/lib/qml, not Qt's
     # <prefix>/qml, so androiddeployqt only bundles Kirigami and the Breeze
     # style if that directory is an explicit QML import path (same as
@@ -114,14 +97,8 @@ if(ANDROID)
             set_property(TARGET kalibrebox APPEND PROPERTY QT_QML_IMPORT_PATH "${_kde_qml_dir}")
         endif()
     endforeach()
-    file(MAKE_DIRECTORY "${ANDROID_PKG_DIR}")
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml.in"
-        "${ANDROID_PKG_DIR}/AndroidManifest.xml" @ONLY)
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/android/src"
-         DESTINATION "${ANDROID_PKG_DIR}")
     set_target_properties(kalibrebox PROPERTIES
-        QT_ANDROID_PACKAGE_SOURCE_DIR "${ANDROID_PKG_DIR}"
+        QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
         QT_ANDROID_PACKAGE_NAME "io.github.kalibrebox"
         QT_ANDROID_VERSION_CODE 1
         QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"

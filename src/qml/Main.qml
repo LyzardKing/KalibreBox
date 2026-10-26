@@ -45,11 +45,13 @@ Kirigami.ApplicationWindow {
         id: addLibraryDialog
         title: i18n("Add Dropbox library")
         padding: Kirigami.Units.largeSpacing
+        preferredWidth: Kirigami.Units.gridUnit * 24
 
         contentItem: ColumnLayout {
             Controls.Label {
                 text: i18n("Dropbox folder or shared link for a Calibre library.")
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
                 wrapMode: Text.WordWrap
                 font.italic: true
             }

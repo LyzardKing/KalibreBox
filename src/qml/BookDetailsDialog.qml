@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
+import QtQuick.Window
 import org.kde.kirigami as Kirigami
 
 Kirigami.Dialog {
@@ -11,10 +12,12 @@ Kirigami.Dialog {
     })
 
     title: i18n("Book details")
-    width: Kirigami.Units.gridUnit * 32
+    // 80% of the window; maximumWidth must follow or it would cap the dialog.
+    preferredWidth: (parent ? parent.width : Screen.width) * 0.8
+    maximumWidth: preferredWidth
     padding: Kirigami.Units.largeSpacing
 
-    contentItem: ColumnLayout {
+    ColumnLayout {
         spacing: Kirigami.Units.smallSpacing
 
         Controls.Label {
@@ -23,6 +26,7 @@ Kirigami.Dialog {
             font.pointSize: 14
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
         }
         Controls.Label {
             visible: root.book.authors.length > 0
@@ -31,6 +35,7 @@ Kirigami.Dialog {
             opacity: 0.8
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
         }
 
         Rectangle {
@@ -59,6 +64,7 @@ Kirigami.Dialog {
             elide: Text.ElideRight
             opacity: 0.85
             Layout.fillWidth: true
+            Layout.preferredWidth: 1
         }
 
         Controls.Label {

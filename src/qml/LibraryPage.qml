@@ -65,10 +65,12 @@ Kirigami.Page {
         id: signInDialog
         title: i18n("Dropbox sign-in")
         padding: Kirigami.Units.largeSpacing
+        preferredWidth: Kirigami.Units.gridUnit * 24
 
         contentItem: ColumnLayout {
             Controls.Label {
                 Layout.fillWidth: true
+                Layout.preferredWidth: 1
                 wrapMode: Text.WordWrap
                 text: library.awaitingAuthCode
                       ? i18n("Paste the code shown by Dropbox in the browser:")
@@ -100,76 +102,98 @@ Kirigami.Page {
         ]
     }
 
+    // Cover-tile grid in the spirit of the Android app (Compose adaptive grid
+    // of 120x180dp cards), sized from Kirigami units so it follows the
+    // platform's scaling.
     GridView {
         id: grid
         anchors.fill: parent
         clip: true
 
+        readonly property real coverWidth: Kirigami.Units.gridUnit * 6.5
+        readonly property real coverHeight: coverWidth * 1.5
+        readonly property real gap: Kirigami.Units.largeSpacing
+        readonly property real sidePadding: Kirigami.Units.largeSpacing
+        readonly property int columns: Math.max(1, Math.floor(
+            (width - 2 * sidePadding + gap) / (coverWidth + gap)))
+
         model: library.books
 
-        cellWidth: {
-            const target = Kirigami.Units.gridUnit * 12;
-            const perRow = Math.max(1, Math.floor(width / target));
-            return Math.floor(width / perRow);
-        }
-        cellHeight: cellWidth * 1.75 + Kirigami.Units.gridUnit * 3
+        leftMargin: sidePadding
+        rightMargin: sidePadding
+        topMargin: Kirigami.Units.smallSpacing
+        bottomMargin: Kirigami.Units.smallSpacing
+
+        cellWidth: (width - 2 * sidePadding) / columns
+        cellHeight: coverHeight + Kirigami.Units.gridUnit * 3 + gap
 
         delegate: Item {
-            id: tileDelegate
+            id: cell
             required property int index
             required property var model
 
             width: grid.cellWidth
             height: grid.cellHeight
 
-            TapHandler {
-                onSingleTapped: {
-                    detailsDialog.book = tileDelegate.model
+            // AbstractCard supplies the card background and press feedback.
+            Kirigami.AbstractCard {
+                id: tileDelegate
+                readonly property var model: cell.model
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: grid.coverWidth + 2 * padding
+                height: parent.height - grid.gap
+                padding: Kirigami.Units.smallSpacing
+                showClickFeedback: true
+                onClicked: {
+                    // Snapshot: the delegate's model object dies with the delegate.
+                    const m = cell.model
+                    detailsDialog.book = {
+                        bookId: m.bookId, title: m.title, authors: m.authors,
+                        comment: m.comment, path: m.path, formats: m.formats,
+                        cover: m.cover
+                    }
                     detailsDialog.open()
                 }
-            }
 
-            Column {
-                x: Kirigami.Units.smallSpacing
-                y: Kirigami.Units.smallSpacing
-                width: parent.width - 2 * Kirigami.Units.smallSpacing
-                spacing: Kirigami.Units.smallSpacing
+                contentItem: Column {
+                    topPadding: Kirigami.Units.smallSpacing
+                    spacing: Kirigami.Units.smallSpacing
 
-                Rectangle {
-                    width: parent.width
-                    height: grid.cellWidth * 1.4
-                    color: Kirigami.Theme.alternateBackgroundColor
+                    Kirigami.ShadowedRectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: grid.coverWidth
+                        height: grid.coverHeight
+                        radius: Kirigami.Units.cornerRadius
+                        color: Kirigami.Theme.alternateBackgroundColor
+                        shadow.size: Kirigami.Units.smallSpacing
+                        shadow.color: Qt.rgba(0, 0, 0, 0.3)
 
-                    Image {
-                        anchors.fill: parent
-                        anchors.margins: 1
-                        asynchronous: true
-                        fillMode: Image.PreserveAspectCrop
-                        sourceSize.width: width
-                        visible: model.cover !== ""
-                        source: model.cover
+                        Image {
+                            anchors.fill: parent
+                            asynchronous: true
+                            fillMode: Image.PreserveAspectCrop
+                            sourceSize.width: width
+                            visible: tileDelegate.model.cover !== ""
+                            source: tileDelegate.model.cover
+                        }
+                        Kirigami.Icon {
+                            anchors.centerIn: parent
+                            width: Kirigami.Units.iconSizes.large
+                            height: width
+                            source: "application-epub+zip"
+                            visible: tileDelegate.model.cover === ""
+                        }
                     }
-                    Kirigami.Icon {
-                        anchors.centerIn: parent
-                        width: parent.width / 3
-                        height: width
-                        source: "application-epub+zip"
-                        visible: model.cover === ""
+                    Controls.Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: grid.coverWidth
+                        text: tileDelegate.model.title
+                        maximumLineCount: 2
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignHCenter
+                        font: Kirigami.Theme.smallFont
                     }
-                }
-                Controls.Label {
-                    width: parent.width
-                    text: model.title
-                    maximumLineCount: 2
-                    wrapMode: Text.WordWrap
-                    elide: Text.ElideRight
-                    font.bold: true
-                }
-                Controls.Label {
-                    width: parent.width
-                    text: model.authors
-                    elide: Text.ElideRight
-                    opacity: 0.7
                 }
             }
         }
