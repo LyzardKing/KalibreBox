@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/model/Book.h"
+#include "core/model/Library.h"
 #include "core/model/SortOrder.h"
 #include "ui/BookListModel.h"
 
@@ -8,6 +9,7 @@
 #include <QObject>
 #include <QSet>
 #include <QString>
+#include <QUrl>
 #include <functional>
 
 namespace KalibreBox {
@@ -31,6 +33,7 @@ class LibraryController : public QObject
     Q_PROPERTY(int sortOrder READ sortOrder WRITE setSortOrder NOTIFY sortOrderChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
     Q_PROPERTY(bool syncing READ syncing NOTIFY syncingChanged)
+    Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
     Q_PROPERTY(bool signedIn READ signedIn NOTIFY signedInChanged)
     Q_PROPERTY(bool awaitingAuthCode READ awaitingAuthCode NOTIFY awaitingAuthCodeChanged)
 
@@ -44,6 +47,7 @@ public:
     int sortOrder() const;
     QString status() const;
     bool syncing() const;
+    bool busy() const;
     bool signedIn() const;
     bool awaitingAuthCode() const;
 
@@ -56,9 +60,20 @@ public:
     /// Path may be a plain folder path or a shared link URL.
     Q_INVOKABLE void addLibrary(const QString &nameOrPath, const QString &name);
     Q_INVOKABLE void removeCurrentLibrary();
+    /// Folder new downloads land in (XDG DownloadLocation).
+    Q_INVOKABLE QString downloadsFolder() const;
     Q_INVOKABLE void signIn();
     Q_INVOKABLE void signOut();
     Q_INVOKABLE void submitAuthCode(const QString &code);
+    /// Downloads the format file into the cache and opens it with the
+    /// system default application.
+    Q_INVOKABLE void openFormat(qlonglong bookId, const QString &bookPath,
+                                const QString &fileName, const QString &format);
+    /// Downloads the format file into the given destination folder
+    /// (file URL), mirroring Android's save-to-Downloads behavior.
+    Q_INVOKABLE void saveFormat(qlonglong bookId, const QString &bookPath,
+                                const QString &fileName, const QString &format,
+                                const QUrl &destinationFolder);
 
 signals:
     void libraryChanged();
@@ -66,6 +81,7 @@ signals:
     void sortOrderChanged();
     void statusChanged();
     void syncingChanged();
+    void busyChanged();
     void signedInChanged();
     void awaitingAuthCodeChanged();
 
@@ -74,6 +90,13 @@ private:
     void requestCover(qlonglong bookId, const Book &book);
     void setStatus(const QString &status);
     void setupAuthConnections();
+    void setBusy(bool busy);
+    void downloadMetadata(const std::optional<Library> &library);
+
+    /// Absolute Dropbox path of a book format file, or the shared-link
+    /// relative path in shared-link libraries.
+    QString remotePathFor(const QString &bookPath, const QString &fileName,
+                          const QString &format) const;
 
     /// Absolute Dropbox path of a book's cover.jpg.
     QString directCoverDropboxPath(const QString &libraryPath, const Book &book) const;
@@ -91,6 +114,7 @@ private:
 
     QString m_status;
     bool m_syncing = false;
+    bool m_busy = false;
     bool m_awaitingAuthCode = false;
 };
 

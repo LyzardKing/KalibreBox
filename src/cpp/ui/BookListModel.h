@@ -29,6 +29,7 @@ public:
         AuthorsRole,
         CommentRole,
         HasCoverRole,
+        PathRole,
         FormatsRole,
         CoverRole
     };

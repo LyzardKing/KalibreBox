@@ -73,6 +73,7 @@ qt_add_qml_module(kalibrebox
     QML_FILES
         src/qml/Main.qml
         src/qml/LibraryPage.qml
+        src/qml/BookDetailsDialog.qml
 )
 
 target_link_libraries(kalibrebox PRIVATE

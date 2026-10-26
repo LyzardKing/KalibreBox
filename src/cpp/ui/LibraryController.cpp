@@ -6,8 +6,10 @@
 #include "core/dropbox/DropboxClient.h"
 #include "core/dropbox/DropboxUrls.h"
 
+#include <QDesktopServices>
 #include <QDir>
 #include <QLoggingCategory>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QUrl>
 
@@ -170,6 +172,67 @@ void LibraryController::syncLibrary()
         return;
     m_syncing = true;
     emit syncingChanged();
+
+    // Skip the download when the remote metadata.db still matches the copy
+    // the last sync saw (size + server_modified persisted in QSettings).
+    QSettings settings;
+    const QString prefix = QStringLiteral("metadata_%1_").arg(current->id);
+    const bool hasState = settings.contains(prefix + QStringLiteral("size"));
+    const qint64 storedSize = settings.value(prefix + QStringLiteral("size")).toLongLong();
+    const qint64 storedModified =
+        settings.value(prefix + QStringLiteral("modified")).toLongLong();
+
+    if (!hasState) {
+        downloadMetadata(current);
+        return;
+    }
+
+    qCInfo(kalibreboxCore).noquote()
+        << QStringLiteral("Checking remote metadata.db state for library %1 …")
+               .arg(current->id);
+    m_client->getMetadata(
+        current->dropboxPath + QStringLiteral("/metadata.db"),
+        [this, current, storedSize, storedModified](
+            std::optional<DropboxFileMetadata> metadata, const QString &error) {
+            if (!metadata) {
+                // Cannot prove it is unchanged; fall through to a full sync.
+                qCInfo(kalibreboxCore).noquote()
+                    << QStringLiteral("get_metadata failed (%1); syncing anyway.")
+                           .arg(error);
+                downloadMetadata(current);
+                return;
+            }
+            if (metadata->size == storedSize
+                && metadata->serverModifiedEpoch == storedModified) {
+                qCInfo(kalibreboxCore).noquote()
+                    << QStringLiteral("metadata.db unchanged; skipping download.")
+                           .arg(current->id);
+                DatabaseHelper::openLibrary(current->id);
+                setStatus(QStringLiteral("Library up to date."));
+                m_syncing = false;
+                emit syncingChanged();
+                refresh();
+                return;
+            }
+            qCInfo(kalibreboxCore).noquote()
+                << QStringLiteral("metadata.db changed (remote %1/%2, local %3/%4); syncing.")
+                       .arg(metadata->size)
+                       .arg(metadata->serverModifiedEpoch)
+                       .arg(storedSize)
+                       .arg(storedModified);
+            downloadMetadata(current);
+        });
+}
+
+void LibraryController::downloadMetadata(const std::optional<Library> &library)
+{
+    const std::optional<Library> current = library;
+    if (!current) {
+        m_syncing = false;
+        emit syncingChanged();
+        return;
+    }
+
     setStatus(QStringLiteral("Downloading %1/metadata.db …").arg(current->dropboxPath));
 
     const QString target = DatabaseHelper::databaseFilePath(current->id);
@@ -193,6 +256,13 @@ void LibraryController::syncLibrary()
                 setStatus(QStringLiteral("Library sync failed: %1").arg(error));
                 return;
             }
+            // Remember what was fetched so the next sync can skip the
+            // download when nothing changed on the remote side.
+            QSettings settings;
+            const QString prefix = QStringLiteral("metadata_%1_").arg(current->id);
+            settings.setValue(prefix + QStringLiteral("size"), metadata->size);
+            settings.setValue(prefix + QStringLiteral("modified"),
+                              metadata->serverModifiedEpoch);
             DatabaseHelper::openLibrary(current->id);
             qCInfo(kalibreboxCore).noquote()
                 << QStringLiteral("Library synced: %1 bytes -> %2")
@@ -256,6 +326,109 @@ void LibraryController::signOut()
 void LibraryController::submitAuthCode(const QString &code)
 {
     m_client->authProvider()->completeDirectSignIn(code);
+}
+
+bool LibraryController::busy() const
+{
+    return m_busy;
+}
+
+QString LibraryController::downloadsFolder() const
+{
+    const QString folder =
+        QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    qCInfo(kalibreboxCore).noquote()
+        << QStringLiteral("Downloads folder: %1").arg(folder);
+    return folder;
+}
+
+void LibraryController::setBusy(bool busy)
+{
+    if (m_busy == busy)
+        return;
+    m_busy = busy;
+    emit busyChanged();
+}
+
+QString LibraryController::remotePathFor(const QString &bookPath,
+                                         const QString &fileName,
+                                         const QString &format) const
+{
+    const QString base =
+        QStringLiteral("%1.%2").arg(fileName, format.toLower());
+    const std::optional<Library> current = m_repository->getCurrentLibrary();
+    if (current && current->sharedLinkUrl)
+        // Shared links address files relative to the link root.
+        return QStringLiteral("/%1/%2").arg(bookPath, base);
+    return QStringLiteral("%1/%2/%3")
+        .arg(current ? current->dropboxPath : QString(), bookPath, base);
+}
+
+void LibraryController::openFormat(qlonglong bookId, const QString &bookPath,
+                                   const QString &fileName, const QString &format)
+{
+    const std::optional<Library> current = m_repository->getCurrentLibrary();
+    if (!current || m_busy)
+        return;
+    setBusy(true);
+
+    const QString cleanName = fileName.section(QLatin1Char('/'), -1);
+    const QDir cacheDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
+    cacheDir.mkpath(QStringLiteral("formats"));
+    const QString target = cacheDir.filePath(
+        QStringLiteral("formats/%1_%2_%3.%4")
+            .arg(current->id, QString::number(bookId), cleanName, format.toLower()));
+
+    setStatus(QStringLiteral("Downloading %1 …").arg(cleanName));
+    qCInfo(kalibreboxCore).noquote()
+        << QStringLiteral("openFormat book %1: %2 -> %3")
+               .arg(bookId)
+               .arg(remotePathFor(bookPath, fileName, format), target);
+
+    m_client->downloadToFile(
+        remotePathFor(bookPath, fileName, format), current->sharedLinkUrl, target,
+        [this, target, cleanName](std::optional<DropboxFileMetadata> metadata,
+                                  const QString &error) {
+            setBusy(false);
+            if (!metadata) {
+                setStatus(QStringLiteral("Could not download %1: %2").arg(cleanName, error));
+                return;
+            }
+            QDesktopServices::openUrl(QUrl::fromLocalFile(target));
+            setStatus(QString());
+        });
+}
+
+void LibraryController::saveFormat(qlonglong bookId, const QString &bookPath,
+                                   const QString &fileName, const QString &format,
+                                   const QUrl &destinationFolder)
+{
+    const std::optional<Library> current = m_repository->getCurrentLibrary();
+    if (!current || m_busy)
+        return;
+
+    const QString cleanName = fileName.section(QLatin1Char('/'), -1);
+    const QString target = QDir(destinationFolder.toLocalFile()).filePath(
+        QStringLiteral("%1.%2").arg(cleanName, format.toLower()));
+
+    setBusy(true);
+    setStatus(QStringLiteral("Downloading %1 …").arg(cleanName));
+    qCInfo(kalibreboxCore).noquote()
+        << QStringLiteral("saveFormat book %1: %2 -> %3")
+               .arg(bookId)
+               .arg(remotePathFor(bookPath, fileName, format), target);
+
+    m_client->downloadToFile(
+        remotePathFor(bookPath, fileName, format), current->sharedLinkUrl, target,
+        [this, target, cleanName](std::optional<DropboxFileMetadata> metadata,
+                                  const QString &error) {
+            setBusy(false);
+            if (!metadata) {
+                setStatus(QStringLiteral("Could not download %1: %2").arg(cleanName, error));
+                return;
+            }
+            setStatus(QStringLiteral("Saved: %1").arg(target));
+        });
 }
 
 QString LibraryController::coverPath(const QString &libraryId, qlonglong bookId) const

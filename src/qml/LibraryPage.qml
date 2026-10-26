@@ -7,14 +7,6 @@ Kirigami.Page {
     id: root
     title: library.hasLibrary ? library.libraryName : i18n("Library")
 
-    actions: [
-        Kirigami.Action {
-            icon.name: "list-add"
-            text: i18n("Add library")
-            onTriggered: addLibraryDialog.open()
-        }
-    ]
-
     function openIfAwaiting() {
         if (library.awaitingAuthCode)
             signInDialog.open()
@@ -28,9 +20,15 @@ Kirigami.Page {
         }
     }
 
+    BookDetailsDialog {
+        id: detailsDialog
+    }
+    // The Add Library dialog now lives in Main.qml (sidebar action).
+    signal addLibraryRequested()
+
     readonly property Kirigami.Action addLibraryAction: Kirigami.Action {
         text: i18n("Add library")
-        onTriggered: addLibraryDialog.open()
+        onTriggered: root.addLibraryRequested()
     }
     readonly property Kirigami.Action signInAction: Kirigami.Action {
         text: i18n("Sign in to Dropbox")
@@ -61,44 +59,6 @@ Kirigami.Page {
                                   : Kirigami.MessageType.Warning
             text: library.status
         }
-    }
-
-    Kirigami.Dialog {
-        id: addLibraryDialog
-        title: i18n("Add Dropbox library")
-        padding: Kirigami.Units.largeSpacing
-
-        contentItem: ColumnLayout {
-            Controls.Label {
-                text: i18n("Dropbox folder or shared link for a Calibre library.")
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                font.italic: true
-            }
-            Controls.TextField {
-                id: libraryNameField
-                Layout.fillWidth: true
-                placeholderText: i18n("Display name (optional)")
-            }
-            Controls.TextField {
-                id: libraryPathField
-                Layout.fillWidth: true
-                placeholderText: i18n("e.g. /CalibreLibrary")
-            }
-        }
-
-        customFooterActions: [
-            Kirigami.Action {
-                text: i18n("Add library")
-                enabled: library.syncing === false && libraryPathField.text.length > 0
-                onTriggered: {
-                    library.addLibrary(libraryPathField.text, libraryNameField.text)
-                    libraryNameField.clear()
-                    libraryPathField.clear()
-                    addLibraryDialog.close()
-                }
-            }
-        ]
     }
 
     Kirigami.Dialog {
@@ -155,11 +115,19 @@ Kirigami.Page {
         cellHeight: cellWidth * 1.75 + Kirigami.Units.gridUnit * 3
 
         delegate: Item {
+            id: tileDelegate
             required property int index
             required property var model
 
             width: grid.cellWidth
             height: grid.cellHeight
+
+            TapHandler {
+                onSingleTapped: {
+                    detailsDialog.book = tileDelegate.model
+                    detailsDialog.open()
+                }
+            }
 
             Column {
                 x: Kirigami.Units.smallSpacing

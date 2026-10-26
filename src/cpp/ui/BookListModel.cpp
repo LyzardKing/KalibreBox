@@ -60,6 +60,8 @@ QVariant BookListModel::data(const QModelIndex &index, int role) const
         return book.comment;
     case HasCoverRole:
         return book.hasCover && m_coverUrls.contains(book.id);
+    case PathRole:
+        return book.path;
     case CoverRole:
         return m_coverUrls.value(book.id);
     case FormatsRole: {
@@ -86,6 +88,7 @@ QHash<int, QByteArray> BookListModel::roleNames() const
     roles.insert(AuthorsRole, QByteArrayLiteral("authors"));
     roles.insert(CommentRole, QByteArrayLiteral("comment"));
     roles.insert(HasCoverRole, QByteArrayLiteral("hasCover"));
+    roles.insert(PathRole, QByteArrayLiteral("path"));
     roles.insert(FormatsRole, QByteArrayLiteral("formats"));
     roles.insert(CoverRole, QByteArrayLiteral("cover"));
     return roles;
