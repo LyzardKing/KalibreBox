@@ -1,24 +1,25 @@
 #include "core/data/LibraryRepository.h"
 #include "core/model/Library.h"
 
-#include <QStandardPaths>
 #include <QSettings>
-#include <QTest>
+#include <QStandardPaths>
 #include <QTemporaryDir>
+#include <QTest>
 
 using namespace KalibreBox;
 
-namespace {
+namespace
+{
 
 QTemporaryDir tempDir;
 
-namespace prefs {
+namespace prefs
+{
 
 QString uniquePrefPath()
 {
     static int counter = 0;
-    return tempDir.filePath(
-        QStringLiteral("prefs_%1").arg(++counter));
+    return tempDir.filePath(QStringLiteral("prefs_%1").arg(++counter));
 }
 
 LibraryRepository makeRepository(const QString &prefPath)
@@ -28,8 +29,7 @@ LibraryRepository makeRepository(const QString &prefPath)
 
 } // namespace prefs
 
-Library makeLibrary(const QString &id, const QString &name, const QString &path,
-                    bool isDefault = false)
+Library makeLibrary(const QString &id, const QString &name, const QString &path, bool isDefault = false)
 {
     Library library;
     library.id = id;
@@ -74,8 +74,7 @@ void tst_libraryrepository::addLibraryPersistsAcrossInstances()
     const QString prefsPath = prefs::uniquePrefPath();
     {
         LibraryRepository repository = prefs::makeRepository(prefsPath);
-        QVERIFY(repository.addLibrary(
-            makeLibrary("aaa", "My Books", "/Books/Calibre")));
+        QVERIFY(repository.addLibrary(makeLibrary("aaa", "My Books", "/Books/Calibre")));
         QCOMPARE(repository.getLibraries().size(), 1);
     }
     {
@@ -160,14 +159,10 @@ void tst_libraryrepository::getCurrentLibraryFallsBackToDefault()
 
 void tst_libraryrepository::displayNameFromPath()
 {
-    QCOMPARE(Library::displayNameFromPath(QStringLiteral("/My Books/Calibre")),
-             QStringLiteral("Calibre"));
-    QCOMPARE(Library::displayNameFromPath(QStringLiteral("/Calibre Library/")),
-             QStringLiteral("Calibre Library"));
-    QCOMPARE(Library::displayNameFromPath(QStringLiteral("/")),
-             QStringLiteral("Library"));
-    QCOMPARE(Library::displayNameFromPath(QStringLiteral("")),
-             QStringLiteral("Library"));
+    QCOMPARE(Library::displayNameFromPath(QStringLiteral("/My Books/Calibre")), QStringLiteral("Calibre"));
+    QCOMPARE(Library::displayNameFromPath(QStringLiteral("/Calibre Library/")), QStringLiteral("Calibre Library"));
+    QCOMPARE(Library::displayNameFromPath(QStringLiteral("/")), QStringLiteral("Library"));
+    QCOMPARE(Library::displayNameFromPath(QStringLiteral("")), QStringLiteral("Library"));
 }
 
 QTEST_MAIN(tst_libraryrepository)

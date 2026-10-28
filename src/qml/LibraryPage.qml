@@ -1,22 +1,26 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.ki18n
 
 Kirigami.Page {
     id: root
-    title: library.hasLibrary ? library.libraryName : i18n("Library")
+    title: LibraryController.hasLibrary ? LibraryController.libraryName : KI18n.i18n("Library")
+    rightPadding: 0
 
     function openIfAwaiting() {
-        if (library.awaitingAuthCode)
-            signInDialog.open()
+        if (LibraryController.awaitingAuthCode)
+            signInDialog.open();
     }
 
     Connections {
-        target: library
+        target: LibraryController
         function onAwaitingAuthCodeChanged() {
-            if (library.awaitingAuthCode)
-                signInDialog.open()
+            if (LibraryController.awaitingAuthCode)
+                signInDialog.open();
         }
     }
 
@@ -24,14 +28,14 @@ Kirigami.Page {
         id: detailsDialog
     }
     // The Add Library dialog now lives in Main.qml (sidebar action).
-    signal addLibraryRequested()
+    signal addLibraryRequested
 
     readonly property Kirigami.Action addLibraryAction: Kirigami.Action {
-        text: i18n("Add library")
+        text: KI18n.i18n("Add library")
         onTriggered: root.addLibraryRequested()
     }
     readonly property Kirigami.Action signInAction: Kirigami.Action {
-        text: i18n("Sign in to Dropbox")
+        text: KI18n.i18n("Sign in to Dropbox")
         onTriggered: signInDialog.open()
     }
 
@@ -39,31 +43,30 @@ Kirigami.Page {
         spacing: 0
 
         RowLayout {
-            Controls.TextField {
+            Kirigami.SearchField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: i18n("Filter by title or author…")
-                text: library.searchQuery
-                onTextChanged: library.searchQuery = text
+                placeholderText: KI18n.i18n("Filter by title or author…")
+                text: LibraryController.searchQuery
+                onTextChanged: LibraryController.searchQuery = text
             }
             Controls.BusyIndicator {
-                visible: library.syncing
-                running: library.syncing
+                visible: LibraryController.syncing
+                running: LibraryController.syncing
             }
         }
         Kirigami.InlineMessage {
             Layout.fillWidth: true
             Layout.margins: Kirigami.Units.smallSpacing
-            visible: library.status.length > 0
-            type: library.syncing ? Kirigami.MessageType.Information
-                                  : Kirigami.MessageType.Warning
-            text: library.status
+            visible: LibraryController.status.length > 0
+            type: LibraryController.syncing ? Kirigami.MessageType.Information : Kirigami.MessageType.Warning
+            text: LibraryController.status
         }
     }
 
     Kirigami.Dialog {
         id: signInDialog
-        title: i18n("Dropbox sign-in")
+        title: KI18n.i18n("Dropbox sign-in")
         padding: Kirigami.Units.largeSpacing
         preferredWidth: Kirigami.Units.gridUnit * 24
 
@@ -72,30 +75,28 @@ Kirigami.Page {
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
                 wrapMode: Text.WordWrap
-                text: library.awaitingAuthCode
-                      ? i18n("Paste the code shown by Dropbox in the browser:")
-                      : i18n("A browser tab will open for the Dropbox sign-in.")
+                text: LibraryController.awaitingAuthCode ? KI18n.i18n("Paste the code shown by Dropbox in the browser:") : KI18n.i18n("A browser tab will open for the Dropbox sign-in.")
             }
             Controls.TextField {
                 id: authCodeField
-                visible: library.awaitingAuthCode
+                visible: LibraryController.awaitingAuthCode
                 Layout.fillWidth: true
-                placeholderText: i18n("Authorization code")
+                placeholderText: KI18n.i18n("Authorization code")
             }
         }
 
         customFooterActions: [
             Kirigami.Action {
-                text: library.awaitingAuthCode ? i18n("Continue") : i18n("Open browser")
+                text: LibraryController.awaitingAuthCode ? KI18n.i18n("Continue") : KI18n.i18n("Open browser")
                 onTriggered: {
-                    if (library.awaitingAuthCode) {
-                        library.submitAuthCode(authCodeField.text)
-                        authCodeField.clear()
-                        signInDialog.close()
+                    if (LibraryController.awaitingAuthCode) {
+                        LibraryController.submitAuthCode(authCodeField.text);
+                        authCodeField.clear();
+                        signInDialog.close();
                     } else {
                         // Keep the dialog open: it switches to the
                         // code-entry form once Dropbox asks for a code.
-                        library.signIn()
+                        LibraryController.signIn();
                     }
                 }
             }
@@ -114,17 +115,42 @@ Kirigami.Page {
         readonly property real coverHeight: coverWidth * 1.5
         readonly property real gap: Kirigami.Units.largeSpacing
         readonly property real sidePadding: Kirigami.Units.largeSpacing
-        readonly property int columns: Math.max(1, Math.floor(
-            (width - 2 * sidePadding + gap) / (coverWidth + gap)))
+        readonly property int columns: Math.max(1, Math.floor((width - leftMargin - rightMargin + gap) / (coverWidth + gap)))
 
-        model: library.books
+        model: LibraryController.books
+
+        // Overlay bar at the page's right edge; tiles reserve room beside it.
+        Controls.ScrollBar.vertical: Controls.ScrollBar {
+            id: vbar
+        }
+
+        // Download covers for what is on screen first (debounced while flicking).
+        function prioritizeVisible() {
+            const rowHeight = cellHeight;
+            const first = Math.floor(Math.max(0, contentY) / rowHeight) * columns;
+            const last = (Math.ceil((contentY + height) / rowHeight) + 1) * columns - 1;
+            LibraryController.prioritizeCovers(first, last);
+        }
+        onContentYChanged: prioritizeTimer.restart()
+        onCountChanged: prioritizeTimer.restart()
+        Connections {
+            target: LibraryController
+            function onCoversQueued() {
+                grid.prioritizeVisible();
+            }
+        }
+        Timer {
+            id: prioritizeTimer
+            interval: 150
+            onTriggered: grid.prioritizeVisible()
+        }
 
         leftMargin: sidePadding
-        rightMargin: sidePadding
+        rightMargin: sidePadding + vbar.implicitWidth
         topMargin: Kirigami.Units.smallSpacing
         bottomMargin: Kirigami.Units.smallSpacing
 
-        cellWidth: (width - 2 * sidePadding) / columns
+        cellWidth: (width - leftMargin - rightMargin) / columns
         cellHeight: coverHeight + Kirigami.Units.gridUnit * 3 + gap
 
         delegate: Item {
@@ -146,13 +172,17 @@ Kirigami.Page {
                 showClickFeedback: true
                 onClicked: {
                     // Snapshot: the delegate's model object dies with the delegate.
-                    const m = cell.model
+                    const m = cell.model;
                     detailsDialog.book = {
-                        bookId: m.bookId, title: m.title, authors: m.authors,
-                        comment: m.comment, path: m.path, formats: m.formats,
+                        bookId: m.bookId,
+                        title: m.title,
+                        authors: m.authors,
+                        comment: m.comment,
+                        path: m.path,
+                        formats: m.formats,
                         cover: m.cover
-                    }
-                    detailsDialog.open()
+                    };
+                    detailsDialog.open();
                 }
 
                 contentItem: Column {
@@ -203,19 +233,9 @@ Kirigami.Page {
             width: parent.width - 2 * Kirigami.Units.largeSpacing
             visible: grid.count === 0
             icon.name: "bookmarks-organize"
-            text: !library.hasLibrary
-                  ? i18n("No library configured")
-                  : i18n("No books found")
-            explanation: !library.hasLibrary
-                  ? (library.signedIn
-                     ? i18n("Add a Dropbox Calibre library to get started.")
-                     : i18n("Sign in to Dropbox first, then add a Calibre library."))
-                  : (library.searchQuery.length
-                     ? i18n("Nothing matches the current filter.")
-                     : i18n("Syncing may still be running, or the library is empty."))
-            helpfulAction: library.signedIn
-                ? root.addLibraryAction
-                : root.signInAction
+            text: !LibraryController.hasLibrary ? KI18n.i18n("No library configured") : KI18n.i18n("No books found")
+            explanation: !LibraryController.hasLibrary ? (LibraryController.signedIn ? KI18n.i18n("Add a Dropbox Calibre library to get started.") : KI18n.i18n("Sign in to Dropbox first, then add a Calibre library.")) : (LibraryController.searchQuery.length ? KI18n.i18n("Nothing matches the current filter.") : KI18n.i18n("Syncing may still be running, or the library is empty."))
+            helpfulAction: LibraryController.signedIn ? root.addLibraryAction : root.signInAction
         }
     }
 }

@@ -8,7 +8,8 @@
 
 class QSettings;
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 /**
  * Repository for managing Calibre libraries, persisted as JSON in settings

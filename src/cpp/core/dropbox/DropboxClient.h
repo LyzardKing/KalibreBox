@@ -13,7 +13,8 @@ class QNetworkAccessManager;
 class QNetworkReply;
 class QSettings;
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 class DropboxAuthProvider;
 
@@ -37,7 +38,10 @@ public:
     explicit DropboxClient(QSettings *settings, QObject *parent = nullptr);
     ~DropboxClient() override;
 
-    DropboxAuthProvider *authProvider() const { return m_authProvider; }
+    DropboxAuthProvider *authProvider() const
+    {
+        return m_authProvider;
+    }
 
     std::optional<DropboxCredential> credential() const;
     bool hasCredential() const;
@@ -46,13 +50,10 @@ public:
 
     // --- API operations (callbacks receive the error, empty string on success) ---
 
-    void listFolder(const QString &path,
-                    const std::function<void(DropboxListFolderResult, const QString &)> &callback);
-    void listFolderContinue(const QString &cursor,
-                            const std::function<void(DropboxListFolderResult, const QString &)> &callback);
+    void listFolder(const QString &path, const std::function<void(DropboxListFolderResult, const QString &)> &callback);
+    void listFolderContinue(const QString &cursor, const std::function<void(DropboxListFolderResult, const QString &)> &callback);
 
-    void getMetadata(const QString &path,
-                     const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback);
+    void getMetadata(const QString &path, const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback);
 
     /**
      * Streams a file to `localTargetPath`. When sharedLinkUrl is set the file
@@ -63,24 +64,45 @@ public:
                         const QString &localTargetPath,
                         const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback);
 
-    void copyFile(const QString &fromPath, const QString &toPath,
-                  const std::function<void(bool, const QString &)> &callback);
-    void deletePath(const QString &path,
-                    const std::function<void(bool, const QString &)> &callback);
+    /// Receives the downloaded bytes; returns false (and sets the error) on failure.
+    using ByteSink = std::function<bool(const QByteArray &, QString *)>;
+
+    /// Like downloadToFile, but hands the bytes to `sink` instead of writing a file.
+    void downloadToSink(const QString &dropboxPath,
+                        const std::optional<QString> &sharedLinkUrl,
+                        const ByteSink &sink,
+                        const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback);
+
+    /**
+     * Downloads a resized JPEG rendition (e.g. "w640h480") of an image at an
+     * authorized path. Shared links are not supported by the thumbnail API.
+     */
+    void downloadThumbnailToFile(const QString &dropboxPath,
+                                 const QString &size,
+                                 const QString &localTargetPath,
+                                 const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback);
+
+    void copyFile(const QString &fromPath, const QString &toPath, const std::function<void(bool, const QString &)> &callback);
+    void deletePath(const QString &path, const std::function<void(bool, const QString &)> &callback);
 
 private:
+    void downloadImpl(const QString &dropboxPath,
+                      const std::optional<QString> &sharedLinkUrl,
+                      const QString &thumbnailSize,
+                      const QString &localTargetPath,
+                      const ByteSink &sink,
+                      const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback);
+
     /// Validates the credential, refreshing if needed, then calls `then`.
     void withValidAccessToken(const std::function<void(bool, const QString &)> &then);
 
     /// POSTs a JSON body to an RPC endpoint with one refresh-retry on 401.
-    void postRpc(const QString &endpoint, const QString &accessToken,
+    void postRpc(const QString &endpoint,
+                 const QString &accessToken,
                  const QJsonDocument &body,
-                 const std::function<void(int statusCode, const QString &errorSummary,
-                                          const QJsonDocument &response)> &callback);
+                 const std::function<void(int statusCode, const QString &errorSummary, const QJsonDocument &response)> &callback);
 
-    void handleReplyJson(QNetworkReply *reply,
-                         const std::function<void(int statusCode, const QString &errorSummary,
-                                                  const QJsonDocument &response)> &callback);
+    void handleReplyJson(QNetworkReply *reply, const std::function<void(int statusCode, const QString &errorSummary, const QJsonDocument &response)> &callback);
 
     static QString errorSummaryFrom(const QJsonDocument &response, int statusCode);
 

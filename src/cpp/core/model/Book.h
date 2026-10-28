@@ -3,18 +3,17 @@
 #include <QList>
 #include <QMetaType>
 
-namespace KalibreBox {
-
-struct BookFormat
+namespace KalibreBox
 {
+
+struct BookFormat {
     QString format;
     QString fileName;
 
     bool operator==(const BookFormat &other) const = default;
 };
 
-struct Book
-{
+struct Book {
     qlonglong id = 0;
     QString title;
     QString path;

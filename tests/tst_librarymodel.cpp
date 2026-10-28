@@ -1,5 +1,5 @@
-#include "core/model/Library.h"
 #include "core/model/Book.h"
+#include "core/model/Library.h"
 #include "core/model/SortOrder.h"
 
 #include <QTest>

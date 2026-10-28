@@ -2,7 +2,8 @@
 
 #include <QString>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 QString Library::displayNameFromPath(const QString &path)
 {

@@ -21,40 +21,30 @@ private slots:
 
 void tst_dropboxurls::absolutePathsPassThrough()
 {
-    QCOMPARE(extractPath(QStringLiteral("/Calibre Library")),
-             QStringLiteral("/Calibre Library"));
-    QCOMPARE(extractPath(QStringLiteral("/Books/My Library")),
-             QStringLiteral("/Books/My Library"));
+    QCOMPARE(extractPath(QStringLiteral("/Calibre Library")), QStringLiteral("/Calibre Library"));
+    QCOMPARE(extractPath(QStringLiteral("/Books/My Library")), QStringLiteral("/Books/My Library"));
 }
 
 void tst_dropboxurls::relativePathsGetLeadingSlash()
 {
-    QCOMPARE(extractPath(QStringLiteral("Calibre Library")),
-             QStringLiteral("/Calibre Library"));
-    QCOMPARE(extractPath(QStringLiteral("  Books  ")),
-             QStringLiteral("/Books"));
+    QCOMPARE(extractPath(QStringLiteral("Calibre Library")), QStringLiteral("/Calibre Library"));
+    QCOMPARE(extractPath(QStringLiteral("  Books  ")), QStringLiteral("/Books"));
 }
 
 void tst_dropboxurls::homeLinksMapToPath()
 {
-    QCOMPARE(extractPath(
-                 QStringLiteral("https://www.dropbox.com/home/Calibre%20Library")),
-             QStringLiteral("/Calibre Library"));
-    QCOMPARE(extractPath(
-                 QStringLiteral("https://www.dropbox.com/home/Books/Calibre")),
-             QStringLiteral("/Books/Calibre"));
+    QCOMPARE(extractPath(QStringLiteral("https://www.dropbox.com/home/Calibre%20Library")), QStringLiteral("/Calibre Library"));
+    QCOMPARE(extractPath(QStringLiteral("https://www.dropbox.com/home/Books/Calibre")), QStringLiteral("/Books/Calibre"));
 }
 
 void tst_dropboxurls::sharedLinksAreMarkers()
 {
-    const QString link =
-        QStringLiteral("https://www.dropbox.com/scl/fo/xyzabc123?rlkey=ab12&dl=0");
+    const QString link = QStringLiteral("https://www.dropbox.com/scl/fo/xyzabc123?rlkey=ab12&dl=0");
     QCOMPARE(extractPath(link), link);
     QVERIFY(isSharedLink(link));
 
     // Multiple segments preserved
-    const QString linkTwo = QStringLiteral(
-        "https://www.dropbox.com/scl/fo/abcdef?rlkey=abc&st=%2F&raw=1");
+    const QString linkTwo = QStringLiteral("https://www.dropbox.com/scl/fo/abcdef?rlkey=abc&st=%2F&raw=1");
     QCOMPARE(extractPath(linkTwo), linkTwo);
     QVERIFY(isSharedLink(linkTwo));
 }

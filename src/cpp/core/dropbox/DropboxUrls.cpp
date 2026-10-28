@@ -5,9 +5,11 @@
 
 #include <algorithm>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
-namespace DropboxUrls {
+namespace DropboxUrls
+{
 
 QString extractPath(const QString &input)
 {
@@ -60,8 +62,7 @@ bool isSharedLink(const QString &input)
 bool isUrl(const QString &input)
 {
     const QString trimmed = input.trimmed();
-    return trimmed.startsWith(QLatin1String("http://"))
-        || trimmed.startsWith(QLatin1String("https://"));
+    return trimmed.startsWith(QLatin1String("http://")) || trimmed.startsWith(QLatin1String("https://"));
 }
 
 bool isValidPath(const QString &path)

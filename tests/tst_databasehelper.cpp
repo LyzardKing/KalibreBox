@@ -3,11 +3,10 @@
 #include "core/model/SortOrder.h"
 
 #include <QFile>
-#include <QStandardPaths>
 #include <QSqlDatabase>
 #include <QSqlError>
-#include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QStandardPaths>
 #include <QTest>
 
 using namespace KalibreBox;
@@ -39,19 +38,19 @@ void tst_databasehelper::initTestCase()
     QVERIFY(DatabaseHelper::openLibrary(libraryId));
     QVERIFY(DatabaseHelper::isOpen(libraryId));
 
-    QSqlQuery query(QSqlDatabase::database(
-        QStringLiteral("kalibrebox_%1").arg(libraryId), false));
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("kalibrebox_%1").arg(libraryId), false));
     for (const QString &statement : DatabaseHelper::calibreSchemaStatements())
         QVERIFY(query.exec(statement));
 
-    QVERIFY(query.exec(
-        "INSERT INTO authors (id, name) VALUES (1, 'J. R. R. Tolkien'), (2, 'José Saramago')"));
-    QVERIFY(query.exec("INSERT INTO books (id, title, path, has_cover) VALUES "
-                       "(1, 'The Hobbit', 'J. R. R. Tolkien/The Hobbit', 1), "
-                       "(2, 'O Ano da Morte de Ricardo Reis', 'Saramago/Ano', 0)"));
+    QVERIFY(query.exec("INSERT INTO authors (id, name) VALUES (1, 'J. R. R. Tolkien'), (2, 'José Saramago')"));
+    QVERIFY(
+        query.exec("INSERT INTO books (id, title, path, has_cover) VALUES "
+                   "(1, 'The Hobbit', 'J. R. R. Tolkien/The Hobbit', 1), "
+                   "(2, 'O Ano da Morte de Ricardo Reis', 'Saramago/Ano', 0)"));
     QVERIFY(query.exec("INSERT INTO books_authors_link VALUES (1, 1, 1), (2, 2, 2)"));
-    QVERIFY(query.exec("INSERT INTO data (book, format, uncompressed_size, name) VALUES "
-                       "(1, 'EPUB', 123, 'The-Hobbit'), (1, 'MOBI', 99, 'The-Hobbit')"));
+    QVERIFY(
+        query.exec("INSERT INTO data (book, format, uncompressed_size, name) VALUES "
+                   "(1, 'EPUB', 123, 'The-Hobbit'), (1, 'MOBI', 99, 'The-Hobbit')"));
     QVERIFY(query.exec("INSERT INTO comments (book, text) VALUES (1, 'There and back again')"));
 }
 

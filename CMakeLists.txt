@@ -8,6 +8,7 @@ project(KalibreBox
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Qt6 6.8 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Sql Network NetworkAuth)
 find_package(KF6I18n REQUIRED)
@@ -22,6 +23,8 @@ set(KALIBREBOX_CORE_SOURCES
     src/cpp/core/dropbox/DropboxUrls.cpp
     src/cpp/core/model/Library.cpp
     src/cpp/core/text/TextNormalization.cpp
+    src/cpp/ui/AndroidDownloads.cpp
+    src/cpp/ui/AndroidFiles.cpp
     src/cpp/ui/BookListModel.cpp
     src/cpp/ui/LibraryController.cpp
 )
@@ -56,6 +59,8 @@ if(DROPBOX_OAUTH_PORT)
         KALIBREBOX_DROPBOX_OAUTH_PORT="${DROPBOX_OAUTH_PORT}")
 endif()
 
+qt_extract_metatypes(kalibreboxcore)
+
 qt_add_executable(kalibrebox
     src/cpp/main.cpp
 )
@@ -64,6 +69,9 @@ target_compile_definitions(kalibrebox PRIVATE
     KALIBREBOX_VERSION="${PROJECT_VERSION}"
 )
 
+# The generated qmltyperegistrations.cpp includes the QML_FOREIGN header by bare name.
+target_include_directories(kalibrebox PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/ui)
+
 qt_add_qml_module(kalibrebox
     URI KalibreBox
     VERSION 1.0
@@ -71,6 +79,8 @@ qt_add_qml_module(kalibrebox
         src/qml/Main.qml
         src/qml/LibraryPage.qml
         src/qml/BookDetailsDialog.qml
+    SOURCES
+        src/cpp/ui/LibraryControllerQml.h
 )
 
 target_link_libraries(kalibrebox PRIVATE
@@ -81,6 +91,7 @@ target_link_libraries(kalibrebox PRIVATE
     Qt6::Quick
     Qt6::QuickControls2
     KF6::I18n
+    KF6::I18nQml
 )
 
 if(ANDROID)
@@ -103,6 +114,59 @@ if(ANDROID)
         QT_ANDROID_VERSION_CODE 1
         QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
     )
+
+    # Bundle the Breeze icons the app uses (the macro adds Kirigami's own
+    # icons itself). Defined by KF6Kirigami's config, which only needs to be
+    # found on Android. The macro installs to ${KDE_INSTALL_QMLDIR}, which is
+    # empty (icons land in /org/kde/...) unless KDEInstallDirs is included,
+    # as Okular's mobile app does via ECM.
+    find_package(ECM REQUIRED NO_MODULE)
+    list(APPEND CMAKE_MODULE_PATH ${ECM_KDE_MODULE_DIR})
+    include(KDEInstallDirs6)
+    find_package(KF6Kirigami REQUIRED)
+    kirigami_package_breeze_icons(ICONS
+        about
+        application-x-storybook
+        bookmarks-organize
+        document-open
+        document-save
+        document-share
+        list-add
+        network-connect
+        network-disconnect
+        view-refresh
+    )
+
+    # Kirigami loads the icons from assets:/qml/org/kde/kirigami/breeze-internal,
+    # which androiddeployqt's QML import scan never copies. As ECM does, hand
+    # it the install dir as an extra plugin dir (copied verbatim to
+    # assets/<dirname>). `cmake --install --prefix <build>/android-icons`
+    # fills it before the APK is built; it must exist at configure time.
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/android-icons/lib/qml")
+    set_property(TARGET kalibrebox APPEND PROPERTY
+        QT_ANDROID_EXTRA_PLUGINS "${CMAKE_BINARY_DIR}/android-icons/lib/qml")
+endif()
+
+# KDE's clang-format style via ECM (generates .clang-format and the
+# `clang-format` target). Optional so builds without ECM still work.
+find_package(ECM NO_MODULE QUIET)
+if(ECM_FOUND AND NOT ANDROID)
+    list(APPEND CMAKE_MODULE_PATH ${ECM_KDE_MODULE_DIR})
+    include(KDEClangFormat)
+    file(GLOB_RECURSE KALIBREBOX_FORMAT_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/tests/*.h)
+    kde_clang_format(${KALIBREBOX_FORMAT_FILES})
+endif()
+
+# QML formatting with Qt's own qmlformat (exported as Qt6::qmlformat), so it
+# doesn't depend on PATH. The `qmlformat` target rewrites files in place.
+if(TARGET Qt6::qmlformat AND NOT ANDROID)
+    get_target_property(KALIBREBOX_QML_SOURCES kalibrebox QT_QML_MODULE_QML_FILES)
+    add_custom_target(qmlformat
+        COMMAND Qt6::qmlformat -i ${KALIBREBOX_QML_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Formatting QML sources with qmlformat")
 endif()
 
 if(NOT ANDROID)

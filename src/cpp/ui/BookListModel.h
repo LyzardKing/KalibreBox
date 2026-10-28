@@ -9,7 +9,8 @@
 #include <QString>
 #include <functional>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 /**
  * Reads the books of the active library for the QML grid.
@@ -22,8 +23,7 @@ class BookListModel : public QAbstractListModel
     Q_OBJECT
 
 public:
-    enum Role
-    {
+    enum Role {
         IdRole = Qt::UserRole + 1,
         TitleRole,
         AuthorsRole,
@@ -37,6 +37,8 @@ public:
 
     explicit BookListModel(QObject *parent = nullptr);
 
+    /// Ids of the books in rows [first, last], clamped to the list.
+    QList<qlonglong> bookIdsInRange(int first, int last) const;
     void setBooks(const QList<Book> &books, const QHash<qlonglong, QString> &coverUrls);
 
     /**

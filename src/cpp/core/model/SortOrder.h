@@ -1,9 +1,9 @@
 #pragma once
 
-namespace KalibreBox {
-
-enum class SortOrder
+namespace KalibreBox
 {
+
+enum class SortOrder {
     Title,
     Author,
     RecentlyAdded

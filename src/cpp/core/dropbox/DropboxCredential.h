@@ -5,21 +5,27 @@
 
 class QSettings;
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 /**
  * OAuth credential with a refresh token (from token_access_type=offline).
  * Everything needed to obtain fresh access tokens without signing in again.
  */
-struct DropboxCredential
-{
+struct DropboxCredential {
     QString accessToken;
     QString refreshToken;
     QString accountId;
     qint64 expiresAt = 0; ///< Unix epoch seconds when accessToken expires.
 
-    bool hasAccessToken() const { return !accessToken.isEmpty(); }
-    bool hasRefreshToken() const { return !refreshToken.isEmpty(); }
+    bool hasAccessToken() const
+    {
+        return !accessToken.isEmpty();
+    }
+    bool hasRefreshToken() const
+    {
+        return !refreshToken.isEmpty();
+    }
 
     /// True when a refresh is needed before `marginSeconds` from now.
     bool needsRefresh(qint64 marginSeconds = 60) const;

@@ -5,9 +5,11 @@
 #include <QJsonObject>
 #include <QSettings>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
-namespace {
+namespace
+{
 
 const char *const prefsGroup = "DropboxPrefs";
 const char *const credentialKey = "dropbox_credential";
@@ -17,8 +19,7 @@ bool fromJsonObject(const QJsonObject &object, DropboxCredential &credential)
     credential.accessToken = object.value(QStringLiteral("access_token")).toString();
     credential.refreshToken = object.value(QStringLiteral("refresh_token")).toString();
     credential.accountId = object.value(QStringLiteral("account_id")).toString();
-    credential.expiresAt = static_cast<qint64>(
-        object.value(QStringLiteral("expires_at")).toDouble(0.0));
+    credential.expiresAt = static_cast<qint64>(object.value(QStringLiteral("expires_at")).toDouble(0.0));
     return credential.hasAccessToken() || credential.hasRefreshToken();
 }
 

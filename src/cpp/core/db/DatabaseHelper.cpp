@@ -7,16 +7,18 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QStandardPaths>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QStandardPaths>
 
 #include <algorithm>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
-namespace {
+namespace
+{
 
 QString connectionNameFor(const QString &libraryId)
 {
@@ -72,8 +74,7 @@ bool DatabaseHelper::openLibrary(const QString &libraryId)
 
 bool DatabaseHelper::isOpen(const QString &libraryId)
 {
-    return QSqlDatabase::contains(connectionNameFor(libraryId))
-        && QSqlDatabase::database(connectionNameFor(libraryId), false).isOpen();
+    return QSqlDatabase::contains(connectionNameFor(libraryId)) && QSqlDatabase::database(connectionNameFor(libraryId), false).isOpen();
 }
 
 void DatabaseHelper::closeLibrary(const QString &libraryId)
@@ -92,8 +93,7 @@ bool DatabaseHelper::clearDatabase(const QString &libraryId)
 {
     if (libraryId.isEmpty()) {
         const QDir dataDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
-        const QFileInfoList metadataFiles =
-            dataDir.entryInfoList({QStringLiteral("metadata_*.db")}, QDir::Files);
+        const QFileInfoList metadataFiles = dataDir.entryInfoList({QStringLiteral("metadata_*.db")}, QDir::Files);
         for (const QFileInfo &file : metadataFiles) {
             const QString id = file.completeBaseName().sliced(QStringLiteral("metadata_").size());
             closeLibrary(id);
@@ -118,8 +118,7 @@ QList<Book> DatabaseHelper::getBooks(const QString &libraryId)
 
     QSqlQuery query(connectionFor(libraryId));
     if (!query.exec(QString::fromLatin1(getAllBookDetailsQuery))) {
-        qWarning() << "getBooks query failed:"
-                   << query.lastError().text();
+        qWarning() << "getBooks query failed:" << query.lastError().text();
         return books;
     }
 
@@ -137,13 +136,28 @@ QList<Book> DatabaseHelper::getBooks(const QString &libraryId)
     return books;
 }
 
+QStringList DatabaseHelper::getAuthors(const QString &libraryId)
+{
+    QStringList authors;
+    if (!openLibrary(libraryId))
+        return authors;
+
+    QSqlQuery query(connectionFor(libraryId));
+    if (!query.exec(QStringLiteral("SELECT name FROM authors WHERE id IN (SELECT author FROM books_authors_link) ORDER BY sort"))) {
+        qWarning() << "getAuthors query failed:" << query.lastError().text();
+        return authors;
+    }
+    while (query.next())
+        authors.append(query.value(0).toString());
+    return authors;
+}
+
 void DatabaseHelper::sortBooks(QList<Book> &books, SortOrder order)
 {
     switch (order) {
     case SortOrder::Title:
         std::stable_sort(books.begin(), books.end(), [](const Book &a, const Book &b) {
-            return TextNormalization::normalizeForSearch(a.title)
-                < TextNormalization::normalizeForSearch(b.title);
+            return TextNormalization::normalizeForSearch(a.title) < TextNormalization::normalizeForSearch(b.title);
         });
         break;
     case SortOrder::Author:
@@ -153,13 +167,13 @@ void DatabaseHelper::sortBooks(QList<Book> &books, SortOrder order)
                 return b.authors.isEmpty();
             if (a.authors.isEmpty())
                 return false;
-            return TextNormalization::normalizeForSearch(a.authors)
-                < TextNormalization::normalizeForSearch(b.authors);
+            return TextNormalization::normalizeForSearch(a.authors) < TextNormalization::normalizeForSearch(b.authors);
         });
         break;
     case SortOrder::RecentlyAdded:
-        std::stable_sort(books.begin(), books.end(),
-                         [](const Book &a, const Book &b) { return a.id > b.id; });
+        std::stable_sort(books.begin(), books.end(), [](const Book &a, const Book &b) {
+            return a.id > b.id;
+        });
         break;
     }
 }
@@ -201,49 +215,44 @@ QStringList DatabaseHelper::calibreSchemaStatements()
 {
     // Only what the app reads; Calibre owns the real database.
     return {
-        QStringLiteral(
-            "CREATE TABLE authors ("
-            "  id   INTEGER PRIMARY KEY,"
-            "  name TEXT NOT NULL COLLATE NOCASE,"
-            "  sort TEXT COLLATE NOCASE,"
-            "  link TEXT NOT NULL DEFAULT \"\","
-            "  UNIQUE(name))"),
-        QStringLiteral(
-            "CREATE TABLE books ("
-            "  id      INTEGER PRIMARY KEY AUTOINCREMENT,"
-            "  title   TEXT NOT NULL DEFAULT 'Unknown' COLLATE NOCASE,"
-            "  sort    TEXT COLLATE NOCASE,"
-            "  timestamp TEXT,"
-            "  pubdate TEXT,"
-            "  series_index REAL NOT NULL DEFAULT 1.0,"
-            "  author_sort TEXT COLLATE NOCASE,"
-            "  isbn TEXT DEFAULT \"\" COLLATE NOCASE,"
-            "  lccn TEXT DEFAULT \"\" COLLATE NOCASE,"
-            "  path TEXT NOT NULL DEFAULT \"\","
-            "  flags INTEGER NOT NULL DEFAULT 1,"
-            "  uuid TEXT,"
-            "  has_cover INTEGER DEFAULT 0,"
-            "  last_modified TEXT NOT NULL DEFAULT \"2000-01-01 00:00:00+00:00\")"),
-        QStringLiteral(
-            "CREATE TABLE books_authors_link ("
-            "  id     INTEGER PRIMARY KEY,"
-            "  book   INTEGER NOT NULL,"
-            "  author INTEGER NOT NULL,"
-            "  UNIQUE(book, author))"),
-        QStringLiteral(
-            "CREATE TABLE data ("
-            "  id     INTEGER PRIMARY KEY,"
-            "  book   INTEGER NOT NULL,"
-            "  format TEXT NOT NULL COLLATE NOCASE,"
-            "  uncompressed_size INTEGER NOT NULL,"
-            "  name   TEXT NOT NULL,"
-            "  UNIQUE(book, format))"),
-        QStringLiteral(
-            "CREATE TABLE comments ("
-            "  id   INTEGER PRIMARY KEY,"
-            "  book INTEGER NOT NULL,"
-            "  text TEXT NOT NULL COLLATE NOCASE,"
-            "  UNIQUE(book))"),
+        QStringLiteral("CREATE TABLE authors ("
+                       "  id   INTEGER PRIMARY KEY,"
+                       "  name TEXT NOT NULL COLLATE NOCASE,"
+                       "  sort TEXT COLLATE NOCASE,"
+                       "  link TEXT NOT NULL DEFAULT \"\","
+                       "  UNIQUE(name))"),
+        QStringLiteral("CREATE TABLE books ("
+                       "  id      INTEGER PRIMARY KEY AUTOINCREMENT,"
+                       "  title   TEXT NOT NULL DEFAULT 'Unknown' COLLATE NOCASE,"
+                       "  sort    TEXT COLLATE NOCASE,"
+                       "  timestamp TEXT,"
+                       "  pubdate TEXT,"
+                       "  series_index REAL NOT NULL DEFAULT 1.0,"
+                       "  author_sort TEXT COLLATE NOCASE,"
+                       "  isbn TEXT DEFAULT \"\" COLLATE NOCASE,"
+                       "  lccn TEXT DEFAULT \"\" COLLATE NOCASE,"
+                       "  path TEXT NOT NULL DEFAULT \"\","
+                       "  flags INTEGER NOT NULL DEFAULT 1,"
+                       "  uuid TEXT,"
+                       "  has_cover INTEGER DEFAULT 0,"
+                       "  last_modified TEXT NOT NULL DEFAULT \"2000-01-01 00:00:00+00:00\")"),
+        QStringLiteral("CREATE TABLE books_authors_link ("
+                       "  id     INTEGER PRIMARY KEY,"
+                       "  book   INTEGER NOT NULL,"
+                       "  author INTEGER NOT NULL,"
+                       "  UNIQUE(book, author))"),
+        QStringLiteral("CREATE TABLE data ("
+                       "  id     INTEGER PRIMARY KEY,"
+                       "  book   INTEGER NOT NULL,"
+                       "  format TEXT NOT NULL COLLATE NOCASE,"
+                       "  uncompressed_size INTEGER NOT NULL,"
+                       "  name   TEXT NOT NULL,"
+                       "  UNIQUE(book, format))"),
+        QStringLiteral("CREATE TABLE comments ("
+                       "  id   INTEGER PRIMARY KEY,"
+                       "  book INTEGER NOT NULL,"
+                       "  text TEXT NOT NULL COLLATE NOCASE,"
+                       "  UNIQUE(book))"),
     };
 }
 

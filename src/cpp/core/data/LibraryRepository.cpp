@@ -8,9 +8,11 @@
 
 #include <algorithm>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
-namespace {
+namespace
+{
 
 const char *const keyLibraries = "libraries";
 const char *const keyCurrentLibraryId = "current_library_id";
@@ -22,8 +24,7 @@ Library libraryFromJson(const QJsonObject &object)
     library.name = object.value(QStringLiteral("name")).toString();
     library.dropboxPath = object.value(QStringLiteral("dropboxPath")).toString();
     library.isDefault = object.value(QStringLiteral("isDefault")).toBool();
-    if (!object.value(QStringLiteral("sharedLinkUrl")).isNull()
-        && object.contains(QStringLiteral("sharedLinkUrl")))
+    if (!object.value(QStringLiteral("sharedLinkUrl")).isNull() && object.contains(QStringLiteral("sharedLinkUrl")))
         library.sharedLinkUrl = object.value(QStringLiteral("sharedLinkUrl")).toString();
     return library;
 }
@@ -48,8 +49,8 @@ LibraryRepository::LibraryRepository(QSettings *settings)
 }
 
 LibraryRepository::LibraryRepository()
-    : m_settings(new QSettings()),
-      m_ownsSettings(true)
+    : m_settings(new QSettings())
+    , m_ownsSettings(true)
 {
 }
 
@@ -64,7 +65,7 @@ QList<Library> LibraryRepository::getLibraries() const
         return {};
 
     QList<Library> libraries;
-    for (const QJsonValue &value : document.array())
+    for (const auto &value : document.array())
         libraries.append(libraryFromJson(value.toObject()));
     return libraries;
 }
@@ -75,8 +76,7 @@ void LibraryRepository::saveLibraries(const QList<Library> &libraries)
     for (const Library &library : libraries)
         array.append(libraryToJson(library));
 
-    m_settings->setValue(QLatin1String(keyLibraries),
-                         QString::fromUtf8(QJsonDocument(array).toJson(QJsonDocument::Compact)));
+    m_settings->setValue(QLatin1String(keyLibraries), QString::fromUtf8(QJsonDocument(array).toJson(QJsonDocument::Compact)));
 }
 
 bool LibraryRepository::addLibrary(const Library &library)
@@ -116,8 +116,9 @@ bool LibraryRepository::removeLibrary(const QString &libraryId)
     if (!removed)
         return false;
 
-    if (!libraries.isEmpty() && std::none_of(libraries.cbegin(), libraries.cend(),
-            [](const Library &library) { return library.isDefault; }))
+    if (!libraries.isEmpty() && std::ranges::none_of(libraries, [](const Library &library) {
+            return library.isDefault;
+        }))
         libraries[0].isDefault = true;
 
     saveLibraries(libraries);

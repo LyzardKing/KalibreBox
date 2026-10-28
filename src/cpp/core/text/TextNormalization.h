@@ -2,8 +2,8 @@
 
 class QString;
 
-namespace KalibreBox {
-namespace TextNormalization {
+namespace KalibreBox::TextNormalization
+{
 
 /**
  * Normalizes a string for case- and accent-insensitive searching.
@@ -11,5 +11,4 @@ namespace TextNormalization {
  */
 QString normalizeForSearch(const QString &input);
 
-}
 }

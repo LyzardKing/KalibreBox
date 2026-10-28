@@ -1,17 +1,25 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import QtQuick.Window
 import org.kde.kirigami as Kirigami
+import org.kde.ki18n
 
 Kirigami.Dialog {
     id: root
     // Filled in by LibraryPage just before open().
     property var book: ({
-        title: "", authors: "", comment: "", formats: [], bookId: -1, path: ""
-    })
+            title: "",
+            authors: "",
+            comment: "",
+            formats: [],
+            bookId: -1,
+            path: ""
+        })
 
-    title: i18n("Book details")
+    title: KI18n.i18n("Book details")
     // 80% of the window; maximumWidth must follow or it would cap the dialog.
     preferredWidth: (parent ? parent.width : Screen.width) * 0.8
     maximumWidth: preferredWidth
@@ -40,7 +48,8 @@ Kirigami.Dialog {
 
         Rectangle {
             color: Kirigami.Theme.alternateBackgroundColor
-            height: 1
+            // The height should be set by the parent layout
+            // height: 1
             Layout.fillWidth: true
             Layout.topMargin: Kirigami.Units.smallSpacing
             Layout.bottomMargin: Kirigami.Units.smallSpacing
@@ -48,27 +57,42 @@ Kirigami.Dialog {
 
         Controls.Label {
             visible: root.book.comment.length > 0
-            text: i18n("Description")
+            text: KI18n.i18n("Description")
             font.capitalization: Font.AllUppercase
             opacity: 0.7
             Layout.fillWidth: true
         }
-        Controls.Label {
+        Controls.ScrollView {
+            id: descriptionScroll
             visible: root.book.comment.length > 0
-            // Calibre comments are HTML; render as plain text in phase 4.
-            text: root.book.comment.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
-                  ? root.book.comment.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
-                  : i18n("No description available.")
-            wrapMode: Text.WordWrap
-            maximumLineCount: 20
-            elide: Text.ElideRight
-            opacity: 0.85
             Layout.fillWidth: true
             Layout.preferredWidth: 1
+            Layout.maximumHeight: Kirigami.Units.gridUnit * 12
+            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
+            // Content is exactly as wide as the view, so there is nothing to drag sideways.
+            contentWidth: availableWidth
+
+            // Belt and braces for touch: lock the inner Flickable to vertical.
+            Component.onCompleted: {
+                contentItem.flickableDirection = Flickable.VerticalFlick;
+                contentItem.boundsBehavior = Flickable.StopAtBounds;
+            }
+
+            // A read-only TextArea inside a ScrollView wraps to the view width
+            // and scrolls vertically only; the text is selectable too.
+            Controls.TextArea {
+                // Calibre comments are HTML; render as plain text in phase 4.
+                text: root.book.comment.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() ? root.book.comment.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : KI18n.i18n("No description available.")
+                readOnly: true
+                wrapMode: TextEdit.Wrap
+                opacity: 0.85
+                padding: 0
+                background: null
+            }
         }
 
         Controls.Label {
-            text: i18n("Available formats")
+            text: KI18n.i18n("Available formats")
             font.capitalization: Font.AllUppercase
             opacity: 0.7
             Layout.topMargin: Kirigami.Units.mediumSpacing
@@ -78,29 +102,37 @@ Kirigami.Dialog {
         Repeater {
             model: root.book.formats
             delegate: RowLayout {
+                id: formatRow
                 required property var modelData
 
                 Controls.Label {
-                    text: modelData.format
+                    text: formatRow.modelData.format
                     Layout.fillWidth: true
                 }
                 // Open with the system default application (downloads on demand).
                 Controls.ToolButton {
                     icon.name: "document-open"
-                    text: i18n("Open")
+                    text: KI18n.i18n("Open")
                     display: Controls.AbstractButton.TextBesideIcon
-                    enabled: !library.busy
-                    onClicked: library.openFormat(root.book.bookId, root.book.path, modelData.fileName, modelData.format)
+                    enabled: !LibraryController.busy
+                    onClicked: LibraryController.openFormat(root.book.bookId, root.book.path, formatRow.modelData.fileName, formatRow.modelData.format)
+                }
+                // Share sheet; Android only.
+                Controls.ToolButton {
+                    visible: Qt.platform.os === "android"
+                    icon.name: "document-share"
+                    text: KI18n.i18n("Share")
+                    display: Controls.AbstractButton.TextBesideIcon
+                    enabled: !LibraryController.busy
+                    onClicked: LibraryController.shareFormat(root.book.bookId, root.book.path, formatRow.modelData.fileName, formatRow.modelData.format)
                 }
                 // Save into the user's Downloads folder (as on Android).
                 Controls.ToolButton {
                     icon.name: "document-save"
-                    text: i18n("Download")
+                    text: KI18n.i18n("Download")
                     display: Controls.AbstractButton.TextBesideIcon
-                    enabled: !library.busy
-                    onClicked: library.saveFormat(
-                        root.book.bookId, root.book.path, modelData.fileName,
-                        modelData.format, "file://" + library.downloadsFolder())
+                    enabled: !LibraryController.busy
+                    onClicked: LibraryController.saveFormat(root.book.bookId, root.book.path, formatRow.modelData.fileName, formatRow.modelData.format, "file://" + LibraryController.downloadsFolder())
                 }
             }
         }
@@ -108,7 +140,7 @@ Kirigami.Dialog {
 
     customFooterActions: [
         Kirigami.Action {
-            text: i18n("Close")
+            text: KI18n.i18n("Close")
             onTriggered: root.close()
         }
     ]

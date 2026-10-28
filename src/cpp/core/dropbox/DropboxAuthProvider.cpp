@@ -3,15 +3,20 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QHostAddress>
+#include <QLoggingCategory>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QOAuth2AuthorizationCodeFlow>
 #include <QOAuthHttpServerReplyHandler>
 #include <QSettings>
 #include <QTimer>
 #include <QUrl>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
-namespace {
+namespace
+{
 
 // 10 minutes to complete the browser flow.
 constexpr int loginTimeoutMs = 10 * 60 * 1000;
@@ -65,24 +70,26 @@ DropboxAuthProvider::DropboxAuthProvider(QSettings *settings, QObject *parent)
 {
     auto *handler = new PasteCodeReplyHandler(QHostAddress::LocalHost, 0, this);
     handler->setCallbackPath(QStringLiteral("callback"));
-    handler->setCallbackText(QStringLiteral(
-        "<html><body><h3>KalibreBox</h3><p>Signed in. You can close this tab.</p>"
-        "</body></html>"));
+    handler->setCallbackText(
+        QStringLiteral("<html><body><h3>KalibreBox</h3><p>Signed in. You can close this tab.</p>"
+                       "</body></html>"));
     m_replyHandler = handler;
 
     m_flow->setReplyHandler(m_replyHandler);
     m_flow->setAuthorizationUrl(QUrl(QString::fromLatin1(authorizeEndpoint)));
     m_flow->setTokenUrl(QUrl(QString::fromLatin1(tokenEndpointUrl)));
     m_flow->setPkceMethod(QOAuth2AuthorizationCodeFlow::PkceMethod::S256);
-    m_flow->setModifyParametersFunction(
-        [this](QAbstractOAuth::Stage stage, QMultiMap<QString, QVariant> *parameters) {
-            if (stage == QAbstractOAuth::Stage::RequestingAuthorization)
-                parameters->replace(QStringLiteral("token_access_type"),
-                                    QStringLiteral("offline"));
-            // Without a redirect Dropbox shows the code on screen instead.
-            if (!m_loopbackMode)
-                parameters->remove(QStringLiteral("redirect_uri"));
-        });
+    m_flow->setModifyParametersFunction([this](QAbstractOAuth::Stage stage, QMultiMap<QString, QVariant> *parameters) {
+        if (stage == QAbstractOAuth::Stage::RequestingAuthorization)
+            parameters->replace(QStringLiteral("token_access_type"), QStringLiteral("offline"));
+        // PKCE apps have no secret; Qt would send an empty one and Dropbox
+        // answers "invalid_client".
+        if (parameters->value(QStringLiteral("client_secret")).toString().isEmpty())
+            parameters->remove(QStringLiteral("client_secret"));
+        // Without a redirect Dropbox shows the code on screen instead.
+        if (!m_loopbackMode)
+            parameters->remove(QStringLiteral("redirect_uri"));
+    });
 
     connect(m_flow, &QAbstractOAuth::authorizeWithBrowser, this, [this](const QUrl &url) {
         QDesktopServices::openUrl(url);
@@ -90,12 +97,24 @@ DropboxAuthProvider::DropboxAuthProvider(QSettings *settings, QObject *parent)
             emit codeRequested();
     });
     connect(m_flow, &QAbstractOAuth::granted, this, &DropboxAuthProvider::onGranted);
-    connect(m_flow, &QAbstractOAuth2::serverReportedErrorOccurred, this,
-            [this](const QString &error, const QString &description, const QUrl &) {
-                onFailure(description.isEmpty() ? error : description);
-            });
+    connect(m_flow, &QAbstractOAuth2::serverReportedErrorOccurred, this, [this](const QString &error, const QString &description, const QUrl &) {
+        onFailure(description.isEmpty() ? error : description);
+    });
+    // Qt only reports "status 400"; keep Dropbox's JSON error to show the real reason.
+    auto *nam = new QNetworkAccessManager(this);
+    m_flow->setNetworkAccessManager(nam);
+    connect(nam, &QNetworkAccessManager::finished, this, [this](QNetworkReply *reply) {
+        if (reply->error() != QNetworkReply::NoError)
+            m_lastServerError = QString::fromUtf8(reply->peek(reply->bytesAvailable())).trimmed();
+    });
     connect(m_flow, &QAbstractOAuth::requestFailed, this, [this](QAbstractOAuth::Error error) {
-        onFailure(QStringLiteral("Request failed (error %1)").arg(static_cast<int>(error)));
+        // The network manager's finished signal fires just after this one.
+        QTimer::singleShot(0, this, [this, error] {
+            const QString detail = m_lastServerError.isEmpty() ? QStringLiteral("Request failed (error %1)").arg(static_cast<int>(error))
+                                                               : QStringLiteral("Dropbox rejected the request: %1").arg(m_lastServerError);
+            m_lastServerError.clear();
+            onFailure(detail);
+        });
     });
 }
 
@@ -106,8 +125,7 @@ QString DropboxAuthProvider::appKey() const
     if (!m_appKey.isEmpty())
         return m_appKey;
     if (m_settings) {
-        const QString fromSettings =
-            m_settings->value(QStringLiteral("DropboxPrefs/app_key")).toString();
+        const QString fromSettings = m_settings->value(QStringLiteral("DropboxPrefs/app_key")).toString();
         if (!fromSettings.isEmpty())
             return fromSettings;
     }
@@ -147,8 +165,7 @@ QString DropboxAuthProvider::oauthMode() const
     if (isValidMode(env))
         return env;
     if (m_settings) {
-        const QString fromSettings =
-            m_settings->value(QStringLiteral("DropboxPrefs/oauth_mode")).toString();
+        const QString fromSettings = m_settings->value(QStringLiteral("DropboxPrefs/oauth_mode")).toString();
         if (isValidMode(fromSettings))
             return fromSettings;
     }
@@ -158,9 +175,9 @@ QString DropboxAuthProvider::oauthMode() const
 void DropboxAuthProvider::startLogin()
 {
     if (appKey().isEmpty()) {
-        emit authFailed(QStringLiteral(
-            "No Dropbox app key configured. Add dropbox.key=<your key> to "
-            "local.properties, or set KALIBREBOX_DROPBOX_APP_KEY."));
+        emit authFailed(
+            QStringLiteral("No Dropbox app key configured. Add dropbox.key=<your key> to "
+                           "local.properties, or set KALIBREBOX_DROPBOX_APP_KEY."));
         return;
     }
 
@@ -173,9 +190,8 @@ void DropboxAuthProvider::startLogin()
         const int port = oauthPort();
         if (!m_replyHandler->listen(QHostAddress::LocalHost, port)) {
             m_authenticating = false;
-            emit authFailed(QStringLiteral(
-                "Could not listen on http://127.0.0.1:%1 for the OAuth redirect. "
-                "Another process may be occupying the port; free it and retry.")
+            emit authFailed(QStringLiteral("Could not listen on http://127.0.0.1:%1 for the OAuth redirect. "
+                                           "Another process may be occupying the port; free it and retry.")
                                 .arg(port));
             return;
         }
@@ -199,8 +215,7 @@ void DropboxAuthProvider::cancelLogin()
 void DropboxAuthProvider::completeDirectSignIn(const QString &code)
 {
     if (!m_authenticating || m_loopbackMode) {
-        emit authFailed(QStringLiteral(
-            "No sign-in in progress — press 'Sign in' first."));
+        emit authFailed(QStringLiteral("No sign-in in progress — press 'Sign in' first."));
         return;
     }
 
@@ -215,8 +230,7 @@ void DropboxAuthProvider::completeDirectSignIn(const QString &code)
         trimmed = QUrl::fromPercentEncoding(extracted.toUtf8()).trimmed();
     }
 
-    static_cast<PasteCodeReplyHandler *>(m_replyHandler)
-        ->submitCode(trimmed, m_flow->state());
+    static_cast<PasteCodeReplyHandler *>(m_replyHandler)->submitCode(trimmed, m_flow->state());
 }
 
 void DropboxAuthProvider::onGranted()
@@ -229,9 +243,7 @@ void DropboxAuthProvider::onGranted()
     const QString accountId = m_flow->extraTokens().value(QStringLiteral("account_id")).toString();
     if (!accountId.isEmpty())
         credential.accountId = accountId;
-    credential.expiresAt = m_flow->expirationAt().isValid()
-        ? m_flow->expirationAt().toSecsSinceEpoch()
-        : 0;
+    credential.expiresAt = m_flow->expirationAt().isValid() ? m_flow->expirationAt().toSecsSinceEpoch() : 0;
 
     if (!credential.hasAccessToken()) {
         onFailure(QStringLiteral("Token response had no access token"));
@@ -257,8 +269,7 @@ void DropboxAuthProvider::onFailure(const QString &message)
     }
 }
 
-void DropboxAuthProvider::finishRefresh(const std::optional<DropboxCredential> &credential,
-                                        const QString &error)
+void DropboxAuthProvider::finishRefresh(const std::optional<DropboxCredential> &credential, const QString &error)
 {
     m_refreshing = false;
     const std::vector<RefreshCallback> callbacks = std::exchange(m_refreshCallbacks, {});
@@ -283,16 +294,14 @@ void DropboxAuthProvider::refreshAccessToken(const RefreshCallback &callback)
     m_flow->refreshTokens();
 }
 
-void DropboxAuthProvider::ensureFreshToken(
-    const std::function<void(bool, const QString &)> &callback)
+void DropboxAuthProvider::ensureFreshToken(const std::function<void(bool, const QString &)> &callback)
 {
     if (!m_credential || !m_credential->hasAccessToken()) {
         callback(false, QStringLiteral("Not signed in to Dropbox"));
         return;
     }
     if (m_credential->hasRefreshToken() && m_credential->needsRefresh()) {
-        refreshAccessToken([callback](std::optional<DropboxCredential> refreshed,
-                                      const QString &error) {
+        refreshAccessToken([callback](std::optional<DropboxCredential> refreshed, const QString &error) {
             callback(refreshed.has_value(), error);
         });
         return;

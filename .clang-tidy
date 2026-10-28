@@ -1,0 +1,17 @@
+---
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  clang-analyzer-*,
+  cppcoreguidelines-pro-type-cstyle-cast,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  -misc-include-cleaner,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  readability-container-size-empty,
+  readability-redundant-*
+HeaderFilterRegex: '.*/src/cpp/.*'
+WarningsAsErrors: ''

@@ -1,8 +1,8 @@
 #include "core/dropbox/DropboxCredential.h"
 
 #include <QSettings>
-#include <QTest>
 #include <QTemporaryDir>
+#include <QTest>
 
 using namespace KalibreBox;
 

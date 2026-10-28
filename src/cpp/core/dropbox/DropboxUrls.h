@@ -2,13 +2,15 @@
 
 #include <QString>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 /**
  * Utility for parsing Dropbox shared URLs and extracting folder paths.
  * Port of the Android DropboxUrlParser.
  */
-namespace DropboxUrls {
+namespace DropboxUrls
+{
 
 /**
  * Extracts the Dropbox folder path from a shared URL, or returns the input

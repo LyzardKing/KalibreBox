@@ -2,8 +2,8 @@
 
 #include <QString>
 
-namespace KalibreBox {
-namespace TextNormalization {
+namespace KalibreBox::TextNormalization
+{
 
 QString normalizeForSearch(const QString &input)
 {
@@ -20,5 +20,4 @@ QString normalizeForSearch(const QString &input)
     return result.toLower();
 }
 
-}
 }

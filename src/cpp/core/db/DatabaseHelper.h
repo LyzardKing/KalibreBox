@@ -5,11 +5,13 @@
 
 #include <QList>
 #include <QString>
+#include <QStringList>
 #include <optional>
 
 class QSqlDatabase;
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 /**
  * Local side of the Calibre metadata database.
@@ -32,6 +34,8 @@ public:
     static bool clearDatabase(const QString &libraryId = {});
 
     static QList<Book> getBooks(const QString &libraryId);
+    /// Names of all authors that have at least one book, in Calibre's sort order.
+    static QStringList getAuthors(const QString &libraryId);
 
     static void sortBooks(QList<Book> &books, SortOrder order);
     static QList<Book> filterBooks(const QList<Book> &books, const QString &query);

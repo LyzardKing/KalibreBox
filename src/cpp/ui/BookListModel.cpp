@@ -2,15 +2,15 @@
 
 #include <algorithm>
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 BookListModel::BookListModel(QObject *parent)
     : QAbstractListModel(parent)
 {
 }
 
-void BookListModel::setBooks(const QList<Book> &books,
-                             const QHash<qlonglong, QString> &coverUrls)
+void BookListModel::setBooks(const QList<Book> &books, const QHash<qlonglong, QString> &coverUrls)
 {
     beginResetModel();
     m_books = books;
@@ -22,8 +22,7 @@ void BookListModel::setBooks(const QList<Book> &books,
     endResetModel();
 }
 
-void BookListModel::setCoverRequestHandler(
-    const std::function<void(qlonglong)> &handler)
+void BookListModel::setCoverRequestHandler(const std::function<void(qlonglong)> &handler)
 {
     m_coverRequestHandler = handler;
 }
@@ -36,6 +35,14 @@ bool BookListModel::setCover(qlonglong bookId, const QString &coverUrl)
     const QModelIndex modelIndex = index(m_rowForId.value(bookId));
     Q_EMIT dataChanged(modelIndex, modelIndex, {CoverRole});
     return true;
+}
+
+QList<qlonglong> BookListModel::bookIdsInRange(int first, int last) const
+{
+    QList<qlonglong> ids;
+    for (int row = qMax(0, first); row <= last && row < m_books.size(); ++row)
+        ids.append(m_books.at(row).id);
+    return ids;
 }
 
 int BookListModel::rowCount(const QModelIndex &parent) const

@@ -16,8 +16,7 @@ private slots:
 
 void tst_textnormalization::lowercases()
 {
-    QCOMPARE(normalizeForSearch(QStringLiteral("The HOBBIT")),
-             QStringLiteral("the hobbit"));
+    QCOMPARE(normalizeForSearch(QStringLiteral("The HOBBIT")), QStringLiteral("the hobbit"));
 }
 
 void tst_textnormalization::stripsAccents()

@@ -3,10 +3,10 @@
 #include <QMetaType>
 #include <optional>
 
-namespace KalibreBox {
-
-struct Library
+namespace KalibreBox
 {
+
+struct Library {
     QString id;
     QString name;
     QString dropboxPath;

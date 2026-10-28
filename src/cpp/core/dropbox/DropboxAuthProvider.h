@@ -11,7 +11,8 @@ class QSettings;
 class QOAuth2AuthorizationCodeFlow;
 class QOAuthHttpServerReplyHandler;
 
-namespace KalibreBox {
+namespace KalibreBox
+{
 
 /**
  * OAuth 2.0 (authorization code + PKCE, token_access_type=offline) for
@@ -39,11 +40,17 @@ public:
     /// Resolved OAuth mode: "code" (default) or "loopback".
     QString oauthMode() const;
 
-    const std::optional<DropboxCredential> &credential() const { return m_credential; }
+    const std::optional<DropboxCredential> &credential() const
+    {
+        return m_credential;
+    }
     void setCredential(const DropboxCredential &credential);
     void logout();
 
-    bool isAuthenticating() const { return m_authenticating; }
+    bool isAuthenticating() const
+    {
+        return m_authenticating;
+    }
 
     void startLogin();
     void cancelLogin();
@@ -52,8 +59,7 @@ public:
     void completeDirectSignIn(const QString &code);
 
     /// Refreshes the access token using the stored refresh token.
-    void refreshAccessToken(
-        const std::function<void(std::optional<DropboxCredential>, const QString &)> &callback);
+    void refreshAccessToken(const std::function<void(std::optional<DropboxCredential>, const QString &)> &callback);
 
     /// Ensures the credential window is valid, refreshing when needed/unavailable.
     /// `callback` receives true when a usable access token is in credential().
@@ -66,13 +72,11 @@ signals:
     void codeRequested();
 
 private:
-    using RefreshCallback =
-        std::function<void(std::optional<DropboxCredential>, const QString &)>;
+    using RefreshCallback = std::function<void(std::optional<DropboxCredential>, const QString &)>;
 
     void onGranted();
     void onFailure(const QString &message);
-    void finishRefresh(const std::optional<DropboxCredential> &credential,
-                       const QString &error);
+    void finishRefresh(const std::optional<DropboxCredential> &credential, const QString &error);
 
     std::optional<DropboxCredential> m_credential;
     QSettings *m_settings = nullptr;
@@ -81,6 +85,7 @@ private:
     QOAuth2AuthorizationCodeFlow *m_flow = nullptr;
     QOAuthHttpServerReplyHandler *m_replyHandler = nullptr;
 
+    QString m_lastServerError;
     bool m_authenticating = false;
     bool m_loopbackMode = false;
     bool m_refreshing = false;
