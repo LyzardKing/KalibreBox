@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
     if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
 #ifdef Q_OS_ANDROID
         QQuickStyle::setStyle(QStringLiteral("org.kde.breeze"));
+        // QQuickStyle::setStyle(QStringLiteral("Material"));
 #else
         QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
 #endif

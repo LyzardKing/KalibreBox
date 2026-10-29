@@ -82,7 +82,9 @@ qt_add_qml_module(kalibrebox
     QML_FILES
         src/qml/Main.qml
         src/qml/LibraryPage.qml
-        src/qml/BookDetailsDialog.qml
+        src/qml/BookDetailsPage.qml
+        src/qml/SettingsPage.qml
+        src/qml/AboutPage.qml
     SOURCES
         src/cpp/ui/LibraryControllerQml.h
 )

@@ -249,7 +249,29 @@ QUrl LibraryController::downloadFolder() const
 QString LibraryController::downloadFolderPath() const
 {
     const QUrl folder = downloadFolder();
-    return folder.isLocalFile() ? folder.toLocalFile() : QString();
+    if (folder.isLocalFile())
+        return folder.toLocalFile();
+
+    if (folder.scheme() == QLatin1String("content")) {
+        const QString path = QUrl::fromPercentEncoding(folder.path(QUrl::FullyEncoded).toUtf8());
+        const QString treeMarker = QStringLiteral("/tree/");
+        const qsizetype treeStart = path.indexOf(treeMarker);
+        if (treeStart >= 0) {
+            const QString treeId = path.mid(treeStart + treeMarker.size());
+            const qsizetype volumeSeparator = treeId.indexOf(QLatin1Char(':'));
+            if (volumeSeparator >= 0) {
+                const QString volume = treeId.left(volumeSeparator);
+                const QString folderPath = treeId.mid(volumeSeparator + 1);
+                if (volume == QLatin1String("primary"))
+                    return folderPath.isEmpty() ? QStringLiteral("Internal storage") : folderPath;
+                return folderPath.isEmpty() ? volume : QStringLiteral("%1/%2").arg(volume, folderPath);
+            }
+            if (!treeId.isEmpty())
+                return treeId;
+        }
+    }
+
+    return folder.toDisplayString(QUrl::PrettyDecoded);
 }
 
 void LibraryController::setDownloadFolder(const QUrl &folder)

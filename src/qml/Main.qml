@@ -136,35 +136,13 @@ Kirigami.ApplicationWindow {
     Component {
         id: aboutPage
 
-        Kirigami.AboutPage {
-            aboutData: ({
-                    displayName: "KalibreBox",
-                    componentName: "kalibrebox",
-                    shortDescription: KI18n.i18n("Calibre e-book library manager for Dropbox"),
-                    homepage: "https://github.com/LyzardKing/KalibreBox",
-                    bugReport: "https://github.com/LyzardKing/KalibreBox/issues",
-                    version: Qt.application.version,
-                    copyrightStatement: "© 2026 Galileo Sartor",
-                    authors: [
-                        {
-                            name: "Galileo Sartor",
-                            task: "",
-                            emailAddress: "",
-                            webAddress: "",
-                            ocsUsername: ""
-                        }
-                    ],
-                    credits: [],
-                    translators: [],
-                    licenses: [
-                        {
-                            name: "MIT",
-                            text: "© 2026 Galileo Sartor. Released under the MIT license; see the LICENSE file for the full text.",
-                            spdx: "MIT"
-                        }
-                    ]
-                })
-        }
+        AboutPage {}
+    }
+
+    Component {
+        id: bookDetailsPage
+
+        BookDetailsPage {}
     }
 
     Component {
@@ -302,58 +280,8 @@ Kirigami.ApplicationWindow {
     Component {
         id: settingsPage
 
-        Kirigami.ScrollablePage {
-            title: KI18n.i18n("Settings")
-
-            Kirigami.FormLayout {
-                RowLayout {
-                    // Select download folder for books (default is the Downloads folder)
-                    Kirigami.FormData.label: KI18n.i18n("Download folder")
-                    Controls.CheckBox {
-                        id: publicDownloadsCheck
-                        visible: Qt.platform.os === "android"
-                        text: KI18n.i18n("Downloads")
-                        checked: LibraryController.usePublicDownloads
-                        onClicked: {
-                            if (checked) {
-                                LibraryController.usePublicDownloads = true;
-                            } else {
-                                checked = true;
-                                folderDialog.open();
-                            }
-                        }
-                    }
-                    Controls.Button {
-                        visible: Qt.platform.os !== "android" || !LibraryController.usePublicDownloads
-                        icon.name: "folder"
-                        text: LibraryController.downloadFolderPath
-                        onClicked: folderDialog.open()
-                    }
-                }
-                Connections {
-                    target: LibraryController
-                    function onUsePublicDownloadsChanged() {
-                        publicDownloadsCheck.checked = LibraryController.usePublicDownloads;
-                    }
-                }
-                Controls.SpinBox {
-                    Kirigami.FormData.label: KI18n.i18n("Catalogue batch size")
-                    from: 1
-                    to: 500
-                    editable: true
-                    value: LibraryController.opdsBatchSize
-                    onValueModified: LibraryController.opdsBatchSize = value
-                    Controls.ToolTip.visible: hovered
-                    Controls.ToolTip.text: KI18n.i18n("Books loaded at a time from OPDS catalogues; more load as you scroll.")
-                }
-                Controls.ComboBox {
-                    visible: Qt.platform.os == "android"
-                    Kirigami.FormData.label: KI18n.i18n("Theme")
-                    model: [KI18n.i18n("System"), KI18n.i18n("Light"), KI18n.i18n("Dark")]
-                    currentIndex: LibraryController.theme
-                    onActivated: index => LibraryController.theme = index
-                }
-            }
+        SettingsPage {
+            onFolderSelectionRequested: folderDialog.open()
         }
     }
 
@@ -476,6 +404,11 @@ Kirigami.ApplicationWindow {
 
     pageStack.initialPage: LibraryPage {
         onAddLibraryRequested: addLibraryDialog.open()
+        onBookDetailsRequested: function (book) {
+            root.pageStack.layers.push(bookDetailsPage, {
+                book: book
+            });
+        }
     }
 
     FolderDialog {

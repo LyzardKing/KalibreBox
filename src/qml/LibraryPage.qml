@@ -25,19 +25,9 @@ Kirigami.Page {
         }
     }
 
-    BookDetailsDialog {
-        id: detailsDialog
-    }
-    Connections {
-        target: LibraryController
-        // A catalogue book listed without formats got them; refresh the open dialog.
-        function onBookDetailsLoaded(bookId) {
-            if (detailsDialog.book.bookId === bookId)
-                detailsDialog.book = LibraryController.bookDetails(bookId);
-        }
-    }
     // The Add Library dialog now lives in Main.qml (sidebar action).
     signal addLibraryRequested
+    signal bookDetailsRequested(var book)
 
     readonly property Kirigami.Action addLibraryAction: Kirigami.Action {
         text: KI18n.i18n("Add library")
@@ -197,7 +187,7 @@ Kirigami.Page {
                 onClicked: {
                     // Snapshot: the delegate's model object dies with the delegate.
                     const m = cell.model;
-                    detailsDialog.book = {
+                    root.bookDetailsRequested({
                         bookId: m.bookId,
                         title: m.title,
                         authors: m.authors,
@@ -205,8 +195,7 @@ Kirigami.Page {
                         path: m.path,
                         formats: m.formats,
                         cover: m.cover
-                    };
-                    detailsDialog.open();
+                    });
                     // Catalogue stubs only learn their formats when opened.
                     if (m.needsDetails)
                         LibraryController.loadBookDetails(m.bookId);
