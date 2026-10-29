@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         &engine,
         &QQmlApplicationEngine::objectCreationFailed,
         &app,
-        []() {
+        [] {
             QCoreApplication::exit(EXIT_FAILURE);
         },
         Qt::QueuedConnection);

@@ -5,10 +5,7 @@
 
 #include <algorithm>
 
-namespace KalibreBox
-{
-
-namespace DropboxUrls
+namespace KalibreBox::DropboxUrls
 {
 
 QString extractPath(const QString &input)
@@ -71,5 +68,4 @@ bool isValidPath(const QString &path)
     return trimmed.startsWith(u'/') && trimmed.size() > 1;
 }
 
-}
 }

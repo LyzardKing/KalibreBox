@@ -198,7 +198,7 @@ void DropboxAuthProvider::startLogin()
     }
 
     // Abort the whole flow if it is never completed.
-    QTimer::singleShot(loginTimeoutMs, this, [this]() {
+    QTimer::singleShot(loginTimeoutMs, this, [this] {
         if (m_authenticating)
             onFailure(QStringLiteral("Authorization timed out. Please try again."));
     });
@@ -301,7 +301,7 @@ void DropboxAuthProvider::ensureFreshToken(const std::function<void(bool, const 
         return;
     }
     if (m_credential->hasRefreshToken() && m_credential->needsRefresh()) {
-        refreshAccessToken([callback](std::optional<DropboxCredential> refreshed, const QString &error) {
+        refreshAccessToken([callback](const std::optional<DropboxCredential> &refreshed, const QString &error) {
             callback(refreshed.has_value(), error);
         });
         return;

@@ -59,11 +59,15 @@ private slots:
     void updateLibraryModifiesInPlace();
     void getCurrentLibraryFallsBackToDefault();
     void displayNameFromPath();
+    void opdsLibraryRoundTrips();
+    void opdsLibrariesAreDistinguishedByUrl();
+    void legacyJsonLoadsAsDropbox();
+    void displayNameFromUrl();
 };
 
 void tst_libraryrepository::startsEmpty()
 {
-    LibraryRepository repository = prefs::makeRepository(prefs::uniquePrefPath());
+    LibraryRepository const repository = prefs::makeRepository(prefs::uniquePrefPath());
     QCOMPARE(repository.getLibraries().size(), 0);
     QVERIFY(!repository.getCurrentLibrary().has_value());
     QVERIFY(!repository.getDefaultLibrary().has_value());
@@ -78,7 +82,7 @@ void tst_libraryrepository::addLibraryPersistsAcrossInstances()
         QCOMPARE(repository.getLibraries().size(), 1);
     }
     {
-        LibraryRepository repository = prefs::makeRepository(prefsPath);
+        LibraryRepository const repository = prefs::makeRepository(prefsPath);
         QCOMPARE(repository.getLibraries().size(), 1);
         QCOMPARE(repository.getLibraries().first().dropboxPath, QStringLiteral("/Books/Calibre"));
     }
@@ -140,6 +144,70 @@ void tst_libraryrepository::updateLibraryModifiesInPlace()
 
     const Library missing = makeLibrary("not-there", "Nobody", "/Nowhere");
     QVERIFY(!repository.updateLibrary(missing));
+}
+
+void tst_libraryrepository::opdsLibraryRoundTrips()
+{
+    const QString prefsPath = prefs::uniquePrefPath();
+    Library library;
+    library.id = QStringLiteral("opds-1");
+    library.name = QStringLiteral("Gutenberg");
+    library.sourceType = LibrarySourceType::Opds;
+    library.opdsUrl = QStringLiteral("https://www.gutenberg.org/ebooks.opds/");
+    library.opdsUsername = QStringLiteral("reader");
+    {
+        LibraryRepository repository = prefs::makeRepository(prefsPath);
+        QVERIFY(repository.addLibrary(library));
+    }
+    LibraryRepository const repository = prefs::makeRepository(prefsPath);
+    const std::optional<Library> loaded = repository.getLibraryById(QStringLiteral("opds-1"));
+    QVERIFY(loaded.has_value());
+    QVERIFY(loaded->isOpds());
+    QCOMPARE(loaded->opdsUrl, library.opdsUrl);
+    QCOMPARE(loaded->opdsUsername, QStringLiteral("reader"));
+    QVERIFY(loaded->dropboxPath.isEmpty());
+}
+
+void tst_libraryrepository::opdsLibrariesAreDistinguishedByUrl()
+{
+    LibraryRepository repository = prefs::makeRepository(prefs::uniquePrefPath());
+    const auto makeOpds = [](const QString &id, const QString &url) {
+        Library library;
+        library.id = id;
+        library.name = id;
+        library.sourceType = LibrarySourceType::Opds;
+        library.opdsUrl = url;
+        return library;
+    };
+
+    // Both have an empty dropboxPath, which must not count as a duplicate.
+    QVERIFY(repository.addLibrary(makeOpds("a", QStringLiteral("https://one.example/opds"))));
+    QVERIFY(repository.addLibrary(makeOpds("b", QStringLiteral("https://two.example/opds"))));
+    QVERIFY(!repository.addLibrary(makeOpds("c", QStringLiteral("https://one.example/opds"))));
+    QVERIFY(repository.addLibrary(makeLibrary("d", "Dropbox", "/One")));
+    QCOMPARE(repository.getLibraries().size(), 3);
+}
+
+void tst_libraryrepository::legacyJsonLoadsAsDropbox()
+{
+    const QString prefsPath = prefs::uniquePrefPath();
+    {
+        QSettings settings(prefsPath, QSettings::IniFormat);
+        settings.setValue(QStringLiteral("libraries"),
+                          QStringLiteral("[{\"id\":\"old\",\"name\":\"Old\",\"dropboxPath\":\"/Old\","
+                                         "\"isDefault\":true}]"));
+    }
+    LibraryRepository const repository = prefs::makeRepository(prefsPath);
+    const QList<Library> libraries = repository.getLibraries();
+    QCOMPARE(libraries.size(), 1);
+    QVERIFY(!libraries.first().isOpds());
+    QCOMPARE(libraries.first().dropboxPath, QStringLiteral("/Old"));
+}
+
+void tst_libraryrepository::displayNameFromUrl()
+{
+    QCOMPARE(Library::displayNameFromUrl(QStringLiteral(" https://www.gutenberg.org/ebooks.opds/ ")), QStringLiteral("www.gutenberg.org"));
+    QCOMPARE(Library::displayNameFromUrl(QStringLiteral("not a url")), QStringLiteral("Library"));
 }
 
 void tst_libraryrepository::getCurrentLibraryFallsBackToDefault()

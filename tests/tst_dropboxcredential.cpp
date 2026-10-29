@@ -19,7 +19,7 @@ private slots:
     void clearRemovesFromSettings();
 };
 
-DropboxCredential makeCredential()
+static DropboxCredential makeCredential()
 {
     DropboxCredential credential;
     credential.accessToken = QStringLiteral("at.example");
@@ -31,7 +31,7 @@ DropboxCredential makeCredential()
 
 void tst_dropboxcredential::emptyCredentialIsNotUsable()
 {
-    DropboxCredential credential;
+    DropboxCredential const credential;
     QVERIFY(!credential.hasAccessToken());
     QVERIFY(!credential.hasRefreshToken());
     QVERIFY(!credential.needsRefresh());
@@ -82,7 +82,7 @@ void tst_dropboxcredential::malformedJsonIsRejected()
 
 void tst_dropboxcredential::persistsToSettings()
 {
-    QTemporaryDir dir;
+    QTemporaryDir const dir;
     const QString path = dir.filePath(QStringLiteral("prefs.ini"));
 
     {
@@ -99,7 +99,7 @@ void tst_dropboxcredential::persistsToSettings()
 
 void tst_dropboxcredential::clearRemovesFromSettings()
 {
-    QTemporaryDir dir;
+    QTemporaryDir const dir;
     const QString path = dir.filePath(QStringLiteral("prefs.ini"));
 
     {

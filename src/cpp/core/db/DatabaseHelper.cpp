@@ -63,7 +63,7 @@ QString DatabaseHelper::databaseFilePath(const QString &libraryId)
 bool DatabaseHelper::openLibrary(const QString &libraryId)
 {
     // SQLite refuses to create a file in a non-existent directory.
-    QDir dataDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    QDir const dataDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
     dataDir.mkpath(dataDir.absolutePath());
 
     QSqlDatabase db = connectionFor(libraryId);
@@ -156,13 +156,13 @@ void DatabaseHelper::sortBooks(QList<Book> &books, SortOrder order)
 {
     switch (order) {
     case SortOrder::Title:
-        std::stable_sort(books.begin(), books.end(), [](const Book &a, const Book &b) {
+        std::ranges::stable_sort(books, [](const Book &a, const Book &b) {
             return TextNormalization::normalizeForSearch(a.title) < TextNormalization::normalizeForSearch(b.title);
         });
         break;
     case SortOrder::Author:
         // Author-less books sort last, matching the Kotlin compareBy(nullsLast()).
-        std::stable_sort(books.begin(), books.end(), [](const Book &a, const Book &b) {
+        std::ranges::stable_sort(books, [](const Book &a, const Book &b) {
             if (a.authors.isEmpty() != b.authors.isEmpty())
                 return b.authors.isEmpty();
             if (a.authors.isEmpty())
@@ -171,7 +171,7 @@ void DatabaseHelper::sortBooks(QList<Book> &books, SortOrder order)
         });
         break;
     case SortOrder::RecentlyAdded:
-        std::stable_sort(books.begin(), books.end(), [](const Book &a, const Book &b) {
+        std::ranges::stable_sort(books, [](const Book &a, const Book &b) {
             return a.id > b.id;
         });
         break;
@@ -206,7 +206,7 @@ QList<BookFormat> DatabaseHelper::parseFormats(const QString &formatsAndFiles)
         const int colon = entry.indexOf(u':');
         if (colon < 0)
             continue;
-        formats.append({entry.left(colon), entry.mid(colon + 1)});
+        formats.append({.format = entry.left(colon), .fileName = entry.mid(colon + 1)});
     }
     return formats;
 }

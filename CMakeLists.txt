@@ -22,6 +22,10 @@ set(KALIBREBOX_CORE_SOURCES
     src/cpp/core/dropbox/DropboxCredential.cpp
     src/cpp/core/dropbox/DropboxUrls.cpp
     src/cpp/core/model/Library.cpp
+    src/cpp/core/opds/OpdsClient.cpp
+    src/cpp/core/opds/OpdsFeed.cpp
+    src/cpp/core/opds/OpdsParser.cpp
+    src/cpp/core/opds/OpdsSource.cpp
     src/cpp/core/text/TextNormalization.cpp
     src/cpp/ui/AndroidDownloads.cpp
     src/cpp/ui/AndroidFiles.cpp
@@ -128,12 +132,20 @@ if(ANDROID)
         about
         application-x-storybook
         bookmarks-organize
+        configure
         document-open
         document-save
         document-share
+        edit-delete
+        edit-rename
+        folder
+        folder-cloud
         list-add
         network-connect
         network-disconnect
+        network-server	Main.qml
+        preferences-system
+        user
         view-refresh
     )
 

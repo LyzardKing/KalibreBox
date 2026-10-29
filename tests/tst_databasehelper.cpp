@@ -70,7 +70,7 @@ void tst_databasehelper::returnsBooksOrderedByTitle()
 void tst_databasehelper::joinsAuthorsAndComments()
 {
     const QList<Book> books = DatabaseHelper::getBooks(libraryId);
-    const Book hobbit = books.at(1);
+    const Book &hobbit = books.at(1);
     QCOMPARE(hobbit.authors, QStringLiteral("J. R. R. Tolkien"));
     QCOMPARE(hobbit.comment, QStringLiteral("There and back again"));
     QCOMPARE(hobbit.hasCover, true);
@@ -78,7 +78,7 @@ void tst_databasehelper::joinsAuthorsAndComments()
     QCOMPARE(hobbit.formats.at(0).format, QStringLiteral("EPUB"));
     QCOMPARE(hobbit.formats.at(0).fileName, QStringLiteral("The-Hobbit"));
 
-    const Book saramago = books.at(0);
+    const Book &saramago = books.at(0);
     QCOMPARE(saramago.authors, QStringLiteral("José Saramago"));
     QCOMPARE(saramago.comment, QString());
     QCOMPARE(saramago.hasCover, false);

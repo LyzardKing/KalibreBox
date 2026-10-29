@@ -2,14 +2,11 @@
 
 #include <QString>
 
-namespace KalibreBox
-{
-
 /**
  * Utility for parsing Dropbox shared URLs and extracting folder paths.
  * Port of the Android DropboxUrlParser.
  */
-namespace DropboxUrls
+namespace KalibreBox::DropboxUrls
 {
 
 /**
@@ -36,5 +33,4 @@ bool isUrl(const QString &input);
 /// Validates that a string is a usable absolute Dropbox path ("/x...", not "/").
 bool isValidPath(const QString &path);
 
-}
 }

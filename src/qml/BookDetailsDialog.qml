@@ -19,6 +19,9 @@ Kirigami.Dialog {
             path: ""
         })
 
+    // Calibre comments are HTML and catalogue summaries plain text; show both as text.
+    readonly property string plainDescription: book.comment.replace(/<[^>]*>/g, " ").replace(/[ \t\r\f]+/g, " ").replace(/ ?\n ?/g, "\n").replace(/\n{2,}/g, "\n").trim()
+
     title: KI18n.i18n("Book details")
     // 80% of the window; maximumWidth must follow or it would cap the dialog.
     preferredWidth: (parent ? parent.width : Screen.width) * 0.8
@@ -62,33 +65,19 @@ Kirigami.Dialog {
             opacity: 0.7
             Layout.fillWidth: true
         }
-        Controls.ScrollView {
-            id: descriptionScroll
+        // Plain TextArea, no inner ScrollView: the dialog scrolls as a whole, and
+        // a nested scroll area made the dialog's size and position feed back on
+        // each other (binding loop on y) for long descriptions.
+        Controls.TextArea {
             visible: root.book.comment.length > 0
             Layout.fillWidth: true
             Layout.preferredWidth: 1
-            Layout.maximumHeight: Kirigami.Units.gridUnit * 12
-            Controls.ScrollBar.horizontal.policy: Controls.ScrollBar.AlwaysOff
-            // Content is exactly as wide as the view, so there is nothing to drag sideways.
-            contentWidth: availableWidth
-
-            // Belt and braces for touch: lock the inner Flickable to vertical.
-            Component.onCompleted: {
-                contentItem.flickableDirection = Flickable.VerticalFlick;
-                contentItem.boundsBehavior = Flickable.StopAtBounds;
-            }
-
-            // A read-only TextArea inside a ScrollView wraps to the view width
-            // and scrolls vertically only; the text is selectable too.
-            Controls.TextArea {
-                // Calibre comments are HTML; render as plain text in phase 4.
-                text: root.book.comment.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() ? root.book.comment.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() : KI18n.i18n("No description available.")
-                readOnly: true
-                wrapMode: TextEdit.Wrap
-                opacity: 0.85
-                padding: 0
-                background: null
-            }
+            text: root.plainDescription || KI18n.i18n("No description available.")
+            readOnly: true
+            wrapMode: TextEdit.Wrap
+            opacity: 0.85
+            padding: 0
+            background: null
         }
 
         Controls.Label {
@@ -97,6 +86,24 @@ Kirigami.Dialog {
             opacity: 0.7
             Layout.topMargin: Kirigami.Units.mediumSpacing
             Layout.fillWidth: true
+        }
+
+        RowLayout {
+            visible: LibraryController.detailsLoading && root.book.formats.length === 0
+            spacing: Kirigami.Units.smallSpacing
+
+            Controls.BusyIndicator {
+                running: parent.visible
+            }
+            Controls.Label {
+                text: KI18n.i18n("Loading formats…")
+                opacity: 0.7
+            }
+        }
+        Controls.Label {
+            visible: !LibraryController.detailsLoading && root.book.formats.length === 0
+            text: KI18n.i18n("No downloadable formats.")
+            opacity: 0.7
         }
 
         Repeater {
@@ -132,7 +139,7 @@ Kirigami.Dialog {
                     text: KI18n.i18n("Download")
                     display: Controls.AbstractButton.TextBesideIcon
                     enabled: !LibraryController.busy
-                    onClicked: LibraryController.saveFormat(root.book.bookId, root.book.path, formatRow.modelData.fileName, formatRow.modelData.format, "file://" + LibraryController.downloadsFolder())
+                    onClicked: LibraryController.saveFormat(root.book.bookId, root.book.path, formatRow.modelData.fileName, formatRow.modelData.format, LibraryController.downloadFolder)
                 }
             }
         }

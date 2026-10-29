@@ -1,6 +1,12 @@
+.PHONY: build clean start-android start-android-arm32 build-android build-android-arm32 \
+	sign-android sign-android-arm32 install-android logcat lint lint-cpp lint-qml lint-fix format
+
 build:
 	cmake -B build -DCMAKE_BUILD_TYPE=Release
 	cmake --build build -j$(nproc)
+
+clean:
+	rm -rf build
 
 start-android:
 	docker run -ti --rm -v ~/craft-kde-android:/home/user/CraftRoot -v ~/Documents/Projects/KalibreBox:/home/user/KalibreBox invent-registry.kde.org/sysadmin/ci-images/android-qt611 bash
@@ -24,13 +30,12 @@ docker run --rm -ti \
 endef
 
 build-android:
-	$(call android_craft,craft --clean apps/kalibrebox && \
-	craft --install-deps apps/kalibrebox && \
+	$(call android_craft,craft --install-deps apps/kalibrebox && \
 	craft --options apps/kalibrebox.srcDir=/home/user/KalibreBox \
 	--configure --make apps/kalibrebox && \
 	cd /home/user/CraftRoot/build/apps/kalibrebox/work/build && \
 	cmake --install . --prefix $$PWD/android-icons && \
-	rm -f android-build/kalibrebox.apk && cmake --build . --target apk)
+	cmake --build . --target apk)
 
 # 32-bit build for devices that only report armeabi-v7a (e.g. Fire tablets).
 build-android-arm32:
@@ -67,6 +72,10 @@ lint-cpp:
 
 lint-qml:
 	cmake --build build --target kalibrebox_qmllint
+
+lint-fix:
+	clang-tidy -p build $(CPP_SOURCES) --fix
+	clang-format -i $(CPP_FILES)
 
 # Reformat C++ (KDE's clang-format style) and QML (qmlformat) sources in place.
 format:

@@ -2,9 +2,11 @@
 
 #ifdef Q_OS_ANDROID
 #include <QCoreApplication>
+#include <QDir>
 #include <QJniEnvironment>
 #include <QJniObject>
 #include <QMimeDatabase>
+#include <QSaveFile>
 #endif
 
 namespace KalibreBox::AndroidDownloads
@@ -79,6 +81,60 @@ QJniObject newValues(const QString &key, int value)
     return values;
 }
 
+bool writeToStream(const QJniObject &stream, const QByteArray &data, QString *error)
+{
+    if (!stream.isValid())
+        return failed(error, QStringLiteral("Could not open the selected folder for writing."));
+
+    constexpr qsizetype kChunk = 1 << 20;
+    QJniEnvironment env;
+    for (qsizetype offset = 0; offset < data.size(); offset += kChunk) {
+        const jsize length = static_cast<jsize>(qMin(kChunk, data.size() - offset));
+        jbyteArray chunk = env->NewByteArray(length);
+        if (!chunk || env.checkAndClearExceptions()) {
+            stream.callMethod<void>("close");
+            return failed(error, QStringLiteral("Could not allocate a buffer for the download."));
+        }
+        env->SetByteArrayRegion(chunk, 0, length, reinterpret_cast<const jbyte *>(data.constData() + offset));
+        stream.callMethod<void>("write", "([B)V", chunk);
+        env->DeleteLocalRef(chunk);
+        if (env.checkAndClearExceptions()) {
+            stream.callMethod<void>("close");
+            env.checkAndClearExceptions();
+            return failed(error, QStringLiteral("Copying the download failed."));
+        }
+    }
+
+    stream.callMethod<void>("close");
+    if (env.checkAndClearExceptions())
+        return failed(error, QStringLiteral("Closing the downloaded file failed."));
+    return true;
+}
+
+}
+
+bool retainFolderPermission(const QUrl &folder, QString *error)
+{
+    if (folder.scheme() != QLatin1String("content"))
+        return failed(error, QStringLiteral("The selected folder is not an Android document provider URI."));
+
+    const QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    if (!activity.isValid())
+        return failed(error, QStringLiteral("No Android context."));
+
+    const QJniObject resolver = activity.callObjectMethod("getContentResolver", "()Landroid/content/ContentResolver;");
+    const QJniObject uri = QJniObject::callStaticObjectMethod("android/net/Uri",
+                                                              "parse",
+                                                              "(Ljava/lang/String;)Landroid/net/Uri;",
+                                                              jstr(folder.toString(QUrl::FullyEncoded)).object<jstring>());
+    if (!resolver.isValid() || !uri.isValid())
+        return failed(error, QStringLiteral("Could not access the selected folder."));
+
+    resolver.callMethod<void>("takePersistableUriPermission", "(Landroid/net/Uri;I)V", uri.object(), jint(3));
+    QJniEnvironment env;
+    if (env.checkAndClearExceptions())
+        return failed(error, QStringLiteral("Android did not grant persistent access to the selected folder."));
+    return true;
 }
 
 bool saveToPublicDownloads(const QByteArray &data, const QString &displayName, QString *error)
@@ -120,24 +176,11 @@ bool saveToPublicDownloads(const QByteArray &data, const QString &displayName, Q
     if (!out.isValid())
         return failed(error, QStringLiteral("Could not open Downloads for writing."));
 
-    // Written in chunks so no single JNI array has to hold the whole book.
-    constexpr qsizetype kChunk = 1 << 20;
-    QJniEnvironment env;
-    bool copyFailed = false;
-    for (qsizetype offset = 0; offset < data.size() && !copyFailed; offset += kChunk) {
-        const jsize length = static_cast<jsize>(qMin(kChunk, data.size() - offset));
-        jbyteArray chunk = env->NewByteArray(length);
-        env->SetByteArrayRegion(chunk, 0, length, reinterpret_cast<const jbyte *>(data.constData() + offset));
-        out.callMethod<void>("write", "([B)V", chunk);
-        env->DeleteLocalRef(chunk);
-        copyFailed = env.checkAndClearExceptions();
-    }
-    out.callMethod<void>("close");
-
-    if (copyFailed) {
+    if (!writeToStream(out, data, error)) {
         if (scoped)
             resolver.callMethod<jint>("delete", "(Landroid/net/Uri;Ljava/lang/String;[Ljava/lang/String;)I", uri.object(), nullptr, nullptr);
-        return failed(error, QStringLiteral("Copying to Downloads failed."));
+        QJniEnvironment().checkAndClearExceptions();
+        return false;
     }
 
     if (scoped) {
@@ -149,12 +192,94 @@ bool saveToPublicDownloads(const QByteArray &data, const QString &displayName, Q
                                   nullptr,
                                   nullptr);
     }
-    return !env.checkAndClearExceptions();
+    QJniEnvironment env;
+    if (env.checkAndClearExceptions())
+        return failed(error, QStringLiteral("Finalizing the download in Downloads failed."));
+    return true;
+}
+
+bool saveToFolder(const QByteArray &data, const QUrl &folder, const QString &displayName, QString *error)
+{
+    if (folder.isLocalFile()) {
+        QSaveFile file(QDir(folder.toLocalFile()).filePath(displayName));
+        if (!file.open(QIODevice::WriteOnly)) {
+            if (error)
+                *error = file.errorString();
+            return false;
+        }
+        if (file.write(data) != data.size() || !file.commit()) {
+            if (error)
+                *error = file.errorString();
+            return false;
+        }
+        return true;
+    }
+    if (folder.scheme() != QLatin1String("content"))
+        return failed(error, QStringLiteral("The selected folder is not accessible."));
+
+    const QJniObject activity = QNativeInterface::QAndroidApplication::context();
+    if (!activity.isValid())
+        return failed(error, QStringLiteral("No Android context."));
+    const QJniObject resolver = activity.callObjectMethod("getContentResolver", "()Landroid/content/ContentResolver;");
+    const QJniObject treeUri = QJniObject::callStaticObjectMethod("android/net/Uri",
+                                                                  "parse",
+                                                                  "(Ljava/lang/String;)Landroid/net/Uri;",
+                                                                  jstr(folder.toString(QUrl::FullyEncoded)).object<jstring>());
+    if (!resolver.isValid() || !treeUri.isValid())
+        return failed(error, QStringLiteral("Could not access the selected folder."));
+
+    const QJniObject documentId = QJniObject::callStaticObjectMethod("android/provider/DocumentsContract",
+                                                                     "getTreeDocumentId",
+                                                                     "(Landroid/net/Uri;)Ljava/lang/String;",
+                                                                     treeUri.object());
+    if (!documentId.isValid())
+        return failed(error, QStringLiteral("Could not resolve the selected folder."));
+    const QJniObject parentUri = QJniObject::callStaticObjectMethod("android/provider/DocumentsContract",
+                                                                    "buildDocumentUriUsingTree",
+                                                                    "(Landroid/net/Uri;Ljava/lang/String;)Landroid/net/Uri;",
+                                                                    treeUri.object(),
+                                                                    documentId.object<jstring>());
+    if (!parentUri.isValid())
+        return failed(error, QStringLiteral("Could not open the selected folder."));
+
+    const QString mimeType = QMimeDatabase().mimeTypeForFile(displayName, QMimeDatabase::MatchExtension).name();
+    const QJniObject fileUri =
+        QJniObject::callStaticObjectMethod("android/provider/DocumentsContract",
+                                           "createDocument",
+                                           "(Landroid/content/ContentResolver;Landroid/net/Uri;Ljava/lang/String;Ljava/lang/String;)Landroid/net/Uri;",
+                                           resolver.object(),
+                                           parentUri.object(),
+                                           jstr(mimeType).object<jstring>(),
+                                           jstr(displayName).object<jstring>());
+    if (!fileUri.isValid())
+        return failed(error, QStringLiteral("Could not create the file in the selected folder."));
+
+    const QJniObject stream = resolver.callObjectMethod("openOutputStream", "(Landroid/net/Uri;)Ljava/io/OutputStream;", fileUri.object());
+    if (!writeToStream(stream, data, error)) {
+        resolver.callMethod<jint>("delete", "(Landroid/net/Uri;Ljava/lang/String;[Ljava/lang/String;)I", fileUri.object(), nullptr, nullptr);
+        QJniEnvironment().checkAndClearExceptions();
+        return false;
+    }
+    return true;
 }
 
 #else
 
 bool saveToPublicDownloads(const QByteArray &, const QString &, QString *error)
+{
+    if (error)
+        *error = QStringLiteral("Only available on Android.");
+    return false;
+}
+
+bool retainFolderPermission(const QUrl &, QString *error)
+{
+    if (error)
+        *error = QStringLiteral("Only available on Android.");
+    return false;
+}
+
+bool saveToFolder(const QByteArray &, const QUrl &, const QString &, QString *error)
 {
     if (error)
         *error = QStringLiteral("Only available on Android.");

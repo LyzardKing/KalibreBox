@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:relevance="http://a9.com/-/opensearch/extensions/relevance/1.0/">
+<id>http://www.gutenberg.org/ebooks/search.opds/?sort_order=release_date</id>
+<updated>2026-10-28T22:36:09Z</updated>
+<title>All Books</title>
+<subtitle>Free eBooks since 1971.</subtitle>
+<author>
+<name>Project Gutenberg</name>
+<uri>https://www.gutenberg.org</uri>
+<email>webmaster@gutenberg.org</email>
+</author>
+<icon>https://www.gutenberg.org/gutenberg/favicon.ico</icon>
+<link rel="search" type="application/opensearchdescription+xml" title="Project Gutenberg Catalog Search" href="https://www.gutenberg.org/catalog/osd-books.xml"/>
+<link rel="self" title="This Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks/search.opds/?sort_order=release_date"/>
+<link rel="alternate" type="text/html" title="HTML Page" href="/ebooks/search/?sort_order=release_date"/>
+<link rel="start" title="Start Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks.opds/"/>
+<link rel="next" title="Next Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks/search.opds/?sort_order=release_date&amp;start_index=26"/>
+<opensearch:itemsPerPage>25</opensearch:itemsPerPage>
+<opensearch:startIndex>1</opensearch:startIndex>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.facebook.com/gutenberg.new</id>
+<title>Follow new books on Facebook</title>
+<content type="text">Like and follow to see our new books in your feed.</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="https://www.facebook.com/gutenberg.new"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://bsky.app/profile/new.gutenberg.org</id>
+<title>Follow new books on Bluesky</title>
+<content type="text">Boost and follow to see our new books in your feed.</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="https://bsky.app/profile/new.gutenberg.org"/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://mastodon.social/@gutenberg_new</id>
+<title>Follow new books on Mastodon</title>
+<content type="text">Like and follow to see our new books in your feed.</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="https://mastodon.social/@gutenberg_new"/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79876.opds</id>
+<title>The single track</title>
+<content type="text">Isabel Ostrander</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79876.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79875.opds</id>
+<title>Riders of the wind :  a romance</title>
+<content type="text">Elswyth Thane</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79875.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79874.opds</id>
+<title>Overstuffed</title>
+<content type="text">Helen R. Hull</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79874.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79873.opds</id>
+<title>The darkness on Fifth Avenue</title>
+<content type="text">Murray Leinster</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79873.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79872.opds</id>
+<title>Collected papers, Volume II</title>
+<content type="text">Sigmund Freud</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79872.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79871.opds</id>
+<title>Round the globe through Greater Britain</title>
+<content type="text">Oct 27, 2026</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79871.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79870.opds</id>
+<title>Während des Krieges in Deutsch-Ostafrika und Südafrika :  meine Erlebnisse bei Ausbruch des Krieges in Deutsch-Ostafrika, im englischen Gefangenenlager in Südafrika und auf der Rückreise nach Europa (German)</title>
+<content type="text">Georg Gürich</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79870.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79869.opds</id>
+<title>Marriage inside out</title>
+<content type="text">Helen R. Hull</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79869.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79868.opds</id>
+<title>The Sun people</title>
+<content type="text">Edmond Hamilton</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79868.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79867.opds</id>
+<title>The double thirteen</title>
+<content type="text">R. McNair Wilson</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79867.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79866.opds</id>
+<title>Tales of Muscovy and the Ukraine</title>
+<content type="text">G. B. H. Bishop</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79866.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79865.opds</id>
+<title>A selection from the verses of John B. Tabb, made by Alice Meynell</title>
+<content type="text">John B. Tabb</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79865.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79864.opds</id>
+<title>Ferdinand de Soto and the invasion of Florida</title>
+<content type="text">Frederick A. Ober</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79864.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79863.opds</id>
+<title>Memoirs of Charles Campbell, at present prisoner in the jail of Glasgow :  including his adventures as a seaman and as an overseer in the West Indies ... to which is appended, an account of his trial before the Circuit Court of Justiciary at Glasgow, 27th April, 1826.</title>
+<content type="text">Charles Campbell</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79863.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79862.opds</id>
+<title>An introduction to the history of history</title>
+<content type="text">James T. Shotwell</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79862.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79861.opds</id>
+<title>The crew of the Dolphin</title>
+<content type="text">Hesba Stretton</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79861.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79860.opds</id>
+<title>Less than a bird</title>
+<content type="text">Helen R. Hull</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79860.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79859.opds</id>
+<title>Het labyrint der wereld en het paradijs des harten (Dutch)</title>
+<content type="text">Johann Amos Comenius</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79859.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79858.opds</id>
+<title>"Blue for your eyes and brown for your hair"</title>
+<content type="text">Helen R. Hull</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79858.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79857.opds</id>
+<title>Double take</title>
+<content type="text">Winston K. Marks</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79857.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79856.opds</id>
+<title>Collected papers, Volume I</title>
+<content type="text">Sigmund Freud</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79856.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79855.opds</id>
+<title>Wolves of the sea</title>
+<content type="text">Gaston Leroux</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79855.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79854.opds</id>
+<title>How to see the Vatican</title>
+<content type="text">Douglas Brooke Wheelton Sladen</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79854.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79853.opds</id>
+<title>Romance in science :  Lectures from a course called "Browse"</title>
+<content type="text">Bessie Irving Miller</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79853.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:09Z</updated>
+<id>https://www.gutenberg.org/ebooks/79852.opds</id>
+<title>Asteroid 745: Mauritia</title>
+<content type="text">Donald A. Wollheim</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79852.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+</feed>

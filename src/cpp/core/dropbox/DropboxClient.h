@@ -38,13 +38,13 @@ public:
     explicit DropboxClient(QSettings *settings, QObject *parent = nullptr);
     ~DropboxClient() override;
 
-    DropboxAuthProvider *authProvider() const
+    [[nodiscard]] DropboxAuthProvider *authProvider() const
     {
         return m_authProvider;
     }
 
-    std::optional<DropboxCredential> credential() const;
-    bool hasCredential() const;
+    [[nodiscard]] std::optional<DropboxCredential> credential() const;
+    [[nodiscard]] bool hasCredential() const;
     void setCredential(const DropboxCredential &credential);
     void logout();
 

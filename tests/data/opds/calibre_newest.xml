@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- Hand-written to mimic the calibre content server's OPDS output (relative links,
+     0.9-era cover/thumbnail relations, templated search link); not a captured response. -->
+<feed xmlns:dc="http://purl.org/dc/terms/" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns="http://www.w3.org/2005/Atom">
+  <id>urn:calibre:newest</id>
+  <icon>/favicon.png</icon>
+  <updated>2024-05-01T10:00:00+00:00</updated>
+  <title>Newest</title>
+  <author><name>calibre</name><uri>https://calibre-ebook.com</uri></author>
+  <link rel="search" title="Search" type="application/atom+xml" href="/opds/search/{searchTerms}?library_id=My_Library"/>
+  <link rel="start" title="Start" type="application/atom+xml;profile=opds-catalog" href="/opds?library_id=My_Library"/>
+  <link rel="up" title="Up" type="application/atom+xml;profile=opds-catalog" href="/opds?library_id=My_Library"/>
+  <link rel="self" title="Newest" type="application/atom+xml;profile=opds-catalog" href="/opds/navcatalog/4F6E6577657374?library_id=My_Library"/>
+  <link rel="next" title="Next" type="application/atom+xml;profile=opds-catalog" href="/opds/navcatalog/4F6E6577657374?offset=2&amp;library_id=My_Library"/>
+  <entry>
+    <title>Dune</title>
+    <id>urn:uuid:11111111-1111-1111-1111-111111111111</id>
+    <updated>2024-04-30T09:00:00+00:00</updated>
+    <author><name>Frank Herbert</name></author>
+    <link rel="http://opds-spec.org/acquisition" href="/get/EPUB/12/My_Library" length="812345" mtime="2024-04-30T09:00:00+00:00" type="application/epub+zip"/>
+    <link rel="http://opds-spec.org/acquisition" href="/get/MOBI/12/My_Library" length="900001" mtime="2024-04-30T09:00:00+00:00" type="application/x-mobipocket-ebook"/>
+    <link rel="x-stanza-cover-image" type="image/jpeg" href="/get/thumb/12/My_Library?sz=300x400"/>
+    <link rel="x-stanza-cover-image-thumbnail" type="image/jpeg" href="/get/thumb/12/My_Library?sz=60x80"/>
+    <link rel="http://opds-spec.org/cover" type="image/jpeg" href="/get/cover/12/My_Library"/>
+    <link rel="http://opds-spec.org/thumbnail" type="image/jpeg" href="/get/thumb/12/My_Library?sz=60x80"/>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">
+        <div>RATING: ★★★★<br/>TAGS: Science Fiction<br/>SERIES: Dune [1]<br/></div>
+        <div>A desert planet &amp; its spice.</div>
+      </div>
+    </content>
+  </entry>
+  <entry>
+    <title>Ünïcode &amp; Co.</title>
+    <id>urn:uuid:22222222-2222-2222-2222-222222222222</id>
+    <updated>2024-04-29T09:00:00+00:00</updated>
+    <author><name>Jane Doe</name></author>
+    <author><name>John Roe</name></author>
+    <link rel="http://opds-spec.org/acquisition" href="/get/PDF/13/My_Library" length="55" type="application/pdf"/>
+    <link rel="http://opds-spec.org/cover" type="image/jpeg" href="/get/cover/13/My_Library"/>
+    <content type="text">No cover thumbnail, two authors.</content>
+  </entry>
+  <entry>
+    <title>By Author</title>
+    <id>calibre-navcatalog:authors</id>
+    <updated>2024-05-01T10:00:00+00:00</updated>
+    <content type="text">Books sorted by Author</content>
+    <link type="application/atom+xml;type=feed;profile=opds-catalog" href="/opds/navcatalog/4F617574686F7273?library_id=My_Library"/>
+  </entry>
+</feed>

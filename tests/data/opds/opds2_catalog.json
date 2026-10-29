@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "title": "Example Catalog",
+    "numberOfItems": 120,
+    "itemsPerPage": 2,
+    "currentPage": 2
+  },
+  "links": [
+    {"rel": "self", "href": "/opds/new?page=2", "type": "application/opds+json"},
+    {"rel": "start", "href": "/opds", "type": "application/opds+json"},
+    {"rel": "next", "href": "/opds/new?page=3", "type": "application/opds+json"},
+    {"rel": "search", "href": "/opds/search{?query}", "type": "application/opds+json", "templated": true}
+  ],
+  "navigation": [
+    {"href": "/opds/new", "title": "New", "type": "application/opds+json", "rel": "http://opds-spec.org/sort/new"},
+    {"href": "/opds/popular", "title": {"en": "Popular"}}
+  ],
+  "publications": [
+    {
+      "metadata": {
+        "@type": "http://schema.org/Book",
+        "identifier": "urn:isbn:9781503280786",
+        "title": "Moby Dick",
+        "author": [{"name": "Herman Melville"}],
+        "language": ["en"],
+        "modified": "2023-01-01T00:00:00Z",
+        "description": "A whale of a tale.",
+        "subject": [{"name": "Whaling"}, "Sea stories"],
+        "belongsTo": {"series": [{"name": "Classics", "position": 1}]}
+      },
+      "links": [
+        {"rel": "http://opds-spec.org/acquisition/open-access", "href": "/dl/moby.epub", "type": "application/epub+zip"},
+        {"rel": "http://opds-spec.org/acquisition/buy", "href": "/buy/moby", "type": "text/html"},
+        {"rel": ["self", "alternate"], "href": "/publications/moby", "type": "application/opds-publication+json"}
+      ],
+      "images": [
+        {"href": "/img/moby_600.jpg", "type": "image/jpeg", "width": 600, "height": 900},
+        {"href": "/img/moby_100.jpg", "type": "image/jpeg", "width": 100, "height": 150}
+      ]
+    },
+    {
+      "metadata": {
+        "title": {"en": "Localised Title"},
+        "author": "Plain String Author"
+      },
+      "links": [
+        {"rel": "http://opds-spec.org/acquisition", "href": "https://cdn.example.org/2.pdf", "type": "application/pdf"}
+      ],
+      "images": [
+        {"href": "/img/2.jpg", "type": "image/jpeg"}
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "metadata": {"title": "Popular"},
+      "links": [{"rel": "self", "href": "/opds/popular", "type": "application/opds+json"}],
+      "publications": [
+        {
+          "metadata": {"title": "Grouped Book"},
+          "links": [{"rel": "http://opds-spec.org/acquisition", "href": "/dl/grouped.epub", "type": "application/epub+zip"}]
+        }
+      ]
+    }
+  ]
+}

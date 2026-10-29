@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QString>
+#include <QUrl>
 
 namespace KalibreBox::AndroidDownloads
 {
@@ -13,5 +14,7 @@ namespace KalibreBox::AndroidDownloads
  * Returns false and fills `error` on failure. Always fails off Android.
  */
 bool saveToPublicDownloads(const QByteArray &data, const QString &displayName, QString *error);
+bool retainFolderPermission(const QUrl &folder, QString *error);
+bool saveToFolder(const QByteArray &data, const QUrl &folder, const QString &displayName, QString *error);
 
 }

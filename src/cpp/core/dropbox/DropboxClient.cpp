@@ -125,7 +125,7 @@ QString DropboxClient::errorSummaryFrom(const QJsonDocument &response, int statu
 void DropboxClient::handleReplyJson(QNetworkReply *reply,
                                     const std::function<void(int statusCode, const QString &errorSummary, const QJsonDocument &response)> &callback)
 {
-    connect(reply, &QNetworkReply::finished, reply, [reply, callback]() {
+    connect(reply, &QNetworkReply::finished, reply, [reply, callback] {
         reply->deleteLater();
         const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         const QByteArray payload = reply->readAll();
@@ -281,7 +281,7 @@ void DropboxClient::downloadImpl(const QString &dropboxPath,
             if (statusCode == 401 && m_authProvider->credential() && m_authProvider->credential()->hasRefreshToken()) {
                 QNetworkReply *capturedReply = reply;
                 m_authProvider->refreshAccessToken([this, dropboxPath, sharedLinkUrl, thumbnailSize, localTargetPath, sink, callback, capturedReply](
-                                                       std::optional<DropboxCredential> refreshed,
+                                                       const std::optional<DropboxCredential> &refreshed,
                                                        const QString &refreshError) {
                     capturedReply->deleteLater();
                     if (!refreshed) {
@@ -383,7 +383,7 @@ void DropboxClient::downloadImpl(const QString &dropboxPath,
         qCDebug(kalibreboxDropbox).noquote()
             << QStringLiteral("GET content: %1 (local: %2)").arg(QString::fromUtf8(request.rawHeader(QByteArrayLiteral("Dropbox-API-Arg"))), localTargetPath);
         QNetworkReply *reply = m_nam->post(request, QByteArray());
-        connect(reply, &QNetworkReply::finished, reply, [onCompletion, reply]() {
+        connect(reply, &QNetworkReply::finished, reply, [onCompletion, reply] {
             onCompletion(reply);
         });
     });
@@ -404,7 +404,7 @@ void DropboxClient::copyFile(const QString &fromPath, const QString &toPath, con
         postRpc(QStringLiteral("files/copy_v2"),
                 m_authProvider->credential()->accessToken,
                 QJsonDocument(body),
-                [callback](int statusCode, const QString &errorSummary, const QJsonDocument &response) {
+                [callback](int statusCode, const QString &errorSummary, const QJsonDocument & /*response*/) {
                     if (statusCode == 200)
                         callback(true, QString());
                     else

@@ -16,6 +16,8 @@ namespace
 
 const char *const keyLibraries = "libraries";
 const char *const keyCurrentLibraryId = "current_library_id";
+const char *const sourceTypeDropbox = "dropbox";
+const char *const sourceTypeOpds = "opds";
 
 Library libraryFromJson(const QJsonObject &object)
 {
@@ -26,6 +28,11 @@ Library libraryFromJson(const QJsonObject &object)
     library.isDefault = object.value(QStringLiteral("isDefault")).toBool();
     if (!object.value(QStringLiteral("sharedLinkUrl")).isNull() && object.contains(QStringLiteral("sharedLinkUrl")))
         library.sharedLinkUrl = object.value(QStringLiteral("sharedLinkUrl")).toString();
+    // Libraries saved before OPDS support carry no sourceType.
+    if (object.value(QStringLiteral("sourceType")).toString() == QLatin1String(sourceTypeOpds))
+        library.sourceType = LibrarySourceType::Opds;
+    library.opdsUrl = object.value(QStringLiteral("opdsUrl")).toString();
+    library.opdsUsername = object.value(QStringLiteral("opdsUsername")).toString();
     return library;
 }
 
@@ -38,6 +45,11 @@ QJsonObject libraryToJson(const Library &library)
     object.insert(QStringLiteral("isDefault"), library.isDefault);
     if (library.sharedLinkUrl)
         object.insert(QStringLiteral("sharedLinkUrl"), *library.sharedLinkUrl);
+    object.insert(QStringLiteral("sourceType"), QLatin1String(library.isOpds() ? sourceTypeOpds : sourceTypeDropbox));
+    if (library.isOpds()) {
+        object.insert(QStringLiteral("opdsUrl"), library.opdsUrl);
+        object.insert(QStringLiteral("opdsUsername"), library.opdsUsername);
+    }
     return object;
 }
 
@@ -84,7 +96,7 @@ bool LibraryRepository::addLibrary(const Library &library)
     QList<Library> libraries = getLibraries();
 
     for (const Library &existing : libraries) {
-        if (existing.dropboxPath == library.dropboxPath)
+        if (existing.sourceType == library.sourceType && existing.sourceKey() == library.sourceKey())
             return false;
     }
 

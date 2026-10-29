@@ -9,6 +9,7 @@ import org.kde.ki18n
 Kirigami.Page {
     id: root
     title: LibraryController.hasLibrary ? LibraryController.libraryName : KI18n.i18n("Library")
+    leftPadding: Qt.platform.os === "android" ? 0 : Kirigami.Units.largeSpacing
     rightPadding: 0
 
     function openIfAwaiting() {
@@ -26,6 +27,14 @@ Kirigami.Page {
 
     BookDetailsDialog {
         id: detailsDialog
+    }
+    Connections {
+        target: LibraryController
+        // A catalogue book listed without formats got them; refresh the open dialog.
+        function onBookDetailsLoaded(bookId) {
+            if (detailsDialog.book.bookId === bookId)
+                detailsDialog.book = LibraryController.bookDetails(bookId);
+        }
     }
     // The Add Library dialog now lives in Main.qml (sidebar action).
     signal addLibraryRequested
@@ -46,7 +55,7 @@ Kirigami.Page {
             Kirigami.SearchField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: KI18n.i18n("Filter by title or author…")
+                placeholderText: LibraryController.isOpds ? KI18n.i18n("Search the catalogue…") : KI18n.i18n("Filter by title or author…")
                 text: LibraryController.searchQuery
                 onTextChanged: LibraryController.searchQuery = text
             }
@@ -110,16 +119,18 @@ Kirigami.Page {
         id: grid
         anchors.fill: parent
         clip: true
+        reuseItems: true
+        cacheBuffer: cellHeight * 2
 
         readonly property real coverWidth: Kirigami.Units.gridUnit * 6.5
         readonly property real coverHeight: coverWidth * 1.5
         readonly property real gap: Kirigami.Units.largeSpacing
-        readonly property real sidePadding: Kirigami.Units.largeSpacing
+        readonly property real sidePadding: gap
         readonly property int columns: Math.max(1, Math.floor((width - leftMargin - rightMargin + gap) / (coverWidth + gap)))
 
         model: LibraryController.books
 
-        // Overlay bar at the page's right edge; tiles reserve room beside it.
+        // Desktop reserves scrollbar width; Android keeps the outer margin equal to the tile gap.
         Controls.ScrollBar.vertical: Controls.ScrollBar {
             id: vbar
         }
@@ -131,12 +142,25 @@ Kirigami.Page {
             const last = (Math.ceil((contentY + height) / rowHeight) + 1) * columns - 1;
             LibraryController.prioritizeCovers(first, last);
         }
-        onContentYChanged: prioritizeTimer.restart()
-        onCountChanged: prioritizeTimer.restart()
+        // Catalogues load a batch at a time: ask for the next one at the end of
+        // the list, or when the loaded books do not fill the view yet.
+        function loadMoreIfNeeded() {
+            if (count > 0 && LibraryController.canLoadMore && (atYEnd || contentHeight <= height))
+                LibraryController.loadMore();
+        }
+        onMovementEnded: prioritizeTimer.restart()
+        onCountChanged: {
+            prioritizeTimer.restart();
+            loadMoreIfNeeded();
+        }
+        onAtYEndChanged: loadMoreIfNeeded()
         Connections {
             target: LibraryController
             function onCoversQueued() {
                 grid.prioritizeVisible();
+            }
+            function onCanLoadMoreChanged() {
+                grid.loadMoreIfNeeded();
             }
         }
         Timer {
@@ -146,7 +170,7 @@ Kirigami.Page {
         }
 
         leftMargin: sidePadding
-        rightMargin: sidePadding + vbar.implicitWidth
+        rightMargin: sidePadding + (Qt.platform.os === "android" ? 0 : vbar.implicitWidth)
         topMargin: Kirigami.Units.smallSpacing
         bottomMargin: Kirigami.Units.smallSpacing
 
@@ -183,6 +207,9 @@ Kirigami.Page {
                         cover: m.cover
                     };
                     detailsDialog.open();
+                    // Catalogue stubs only learn their formats when opened.
+                    if (m.needsDetails)
+                        LibraryController.loadBookDetails(m.bookId);
                 }
 
                 contentItem: Column {
@@ -231,11 +258,13 @@ Kirigami.Page {
         Kirigami.PlaceholderMessage {
             anchors.centerIn: parent
             width: parent.width - 2 * Kirigami.Units.largeSpacing
-            visible: grid.count === 0
+            visible: grid.count === 0 && !(LibraryController.isOpds && LibraryController.syncing)
             icon.name: "bookmarks-organize"
             text: !LibraryController.hasLibrary ? KI18n.i18n("No library configured") : KI18n.i18n("No books found")
-            explanation: !LibraryController.hasLibrary ? (LibraryController.signedIn ? KI18n.i18n("Add a Dropbox Calibre library to get started.") : KI18n.i18n("Sign in to Dropbox first, then add a Calibre library.")) : (LibraryController.searchQuery.length ? KI18n.i18n("Nothing matches the current filter.") : KI18n.i18n("Syncing may still be running, or the library is empty."))
-            helpfulAction: LibraryController.signedIn ? root.addLibraryAction : root.signInAction
+            explanation: !LibraryController.hasLibrary ? (LibraryController.signedIn ? KI18n.i18n("Add a Dropbox Calibre library to get started.") : KI18n.i18n("Sign in to Dropbox first, then add a Calibre library.")) : (LibraryController.searchQuery.length ? KI18n.i18n("Nothing matches the current filter.") : (LibraryController.isOpds ? KI18n.i18n("The catalogue returned no books. Check its address and your connection.") : KI18n.i18n("Syncing may still be running, or the library is empty."))
+            )
+            // Catalogues have nothing to sign in to or add.
+            helpfulAction: LibraryController.hasLibrary && LibraryController.isOpds ? null : (LibraryController.signedIn ? root.addLibraryAction : root.signInAction)
         }
     }
 }

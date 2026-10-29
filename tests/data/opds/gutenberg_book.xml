@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:relevance="http://a9.com/-/opensearch/extensions/relevance/1.0/">
+<id>http://www.gutenberg.org/ebooks/79876.opds</id>
+<updated>2026-10-28T22:36:18Z</updated>
+<title>The single track by Isabel Ostrander</title>
+<subtitle>Free eBooks since 1971.</subtitle>
+<author>
+<name>Project Gutenberg</name>
+<uri>https://www.gutenberg.org</uri>
+<email>webmaster@gutenberg.org</email>
+</author>
+<icon>https://www.gutenberg.org/gutenberg/favicon.ico</icon>
+<link rel="search" type="application/opensearchdescription+xml" title="Project Gutenberg Catalog Search" href="https://www.gutenberg.org/catalog/osd-books.xml"/>
+<link rel="self" title="This Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks/79876.opds"/>
+<link rel="alternate" type="text/html" title="HTML Page" href="/ebooks/79876"/>
+<link rel="start" title="Start Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks.opds/"/>
+<opensearch:itemsPerPage>25</opensearch:itemsPerPage>
+<opensearch:startIndex>1</opensearch:startIndex>
+<entry>
+<updated>2026-10-28T22:36:18Z</updated>
+<title>The single track</title>
+<content type="xhtml">
+<div xmlns="http://www.w3.org/1999/xhtml">
+<p>This edition had all images removed.</p>
+<p>
+Title:
+The single track
+</p>
+<p>
+Original Publication:
+New York: W. J. Watt &amp; Company, 1919.
+</p>
+<p>
+Credits:
+Charlene Taylor, chenzw, and the Online Distributed Proofreading Team at https:<a href="//www.pgdp.net">//www.pgdp.net</a> (This file was produced from images generously made available by The Internet Archive/American Libraries.)
+</p>
+<p>Author: Ostrander, Isabel, 1883-1924</p><p>Illustrator: Duer, Douglas, 1887-1964</p>
+<p>EBook No.: 79876</p>
+<p>Published: Oct 28, 2026</p>
+<p>Downloads: 0</p>
+<p>Language: English</p>
+<p>Subject: Railroads -- Fiction</p><p>Subject: Young women -- Fiction</p><p>Subject: Love stories</p><p>Subject: Alaska -- Fiction</p><p>Subject: Mines and mineral resources -- Fiction</p>
+<p>LoCC: Language and Literatures: American and Canadian literature</p>
+<p>Category: Text</p>
+<p>Rights: Public domain in the USA.</p>
+</div>
+</content>
+<id>urn:gutenberg:79876:2</id>
+<published>2026-10-28T00:00:00+00:00</published>
+<rights>Public domain in the USA.</rights>
+<contributor>
+<name>Duer, Douglas</name>
+</contributor>
+<author>
+<name>Ostrander, Isabel</name>
+</author>
+<category scheme="http://purl.org/dc/terms/LCSH" term="Railroads -- Fiction"/><category scheme="http://purl.org/dc/terms/LCSH" term="Young women -- Fiction"/><category scheme="http://purl.org/dc/terms/LCSH" term="Love stories"/><category scheme="http://purl.org/dc/terms/LCSH" term="Alaska -- Fiction"/><category scheme="http://purl.org/dc/terms/LCSH" term="Mines and mineral resources -- Fiction"/>
+<category scheme="http://purl.org/dc/terms/LCC" term="PS" label="Language and Literatures: American and Canadian literature"/>
+<category scheme="http://purl.org/dc/terms/DCMIType" term="Text"/>
+<dcterms:language>en</dcterms:language>
+<relevance:score>1</relevance:score>
+<link type="application/epub+zip" rel="http://opds-spec.org/acquisition" title="EPUB (older e-readers, no images)" length="433436" href="https://www.gutenberg.org/ebooks/79876.epub.noimages"/>
+<link type="image/jpeg" rel="http://opds-spec.org/image" href="https://www.gutenberg.org/cache/epub/79876/pg79876.cover.medium.jpg"/>
+<link type="image/jpeg" rel="http://opds-spec.org/image/thumbnail" href="https://www.gutenberg.org/cache/epub/79876/pg79876.cover.small.jpg"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/author/33851.opds" title="By Ostrander, Isabel…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/author/8878.opds" title="By Duer, Douglas…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/896.opds" title="On Railroads -- Fiction…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/2481.opds" title="On Young women -- Fiction…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/2487.opds" title="On Love stories…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/3141.opds" title="On Alaska -- Fiction…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/14595.opds" title="On Mines and mineral resources -- Fiction…"/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:18Z</updated>
+<title>The single track</title>
+<content type="xhtml">
+<div xmlns="http://www.w3.org/1999/xhtml">
+<p>This edition has images.</p>
+<p>
+Title:
+The single track
+</p>
+<p>
+Original Publication:
+New York: W. J. Watt &amp; Company, 1919.
+</p>
+<p>
+Credits:
+Charlene Taylor, chenzw, and the Online Distributed Proofreading Team at https:<a href="//www.pgdp.net">//www.pgdp.net</a> (This file was produced from images generously made available by The Internet Archive/American Libraries.)
+</p>
+<p>Author: Ostrander, Isabel, 1883-1924</p><p>Illustrator: Duer, Douglas, 1887-1964</p>
+<p>EBook No.: 79876</p>
+<p>Published: Oct 28, 2026</p>
+<p>Downloads: 0</p>
+<p>Language: English</p>
+<p>Subject: Railroads -- Fiction</p><p>Subject: Young women -- Fiction</p><p>Subject: Love stories</p><p>Subject: Alaska -- Fiction</p><p>Subject: Mines and mineral resources -- Fiction</p>
+<p>LoCC: Language and Literatures: American and Canadian literature</p>
+<p>Category: Text</p>
+<p>Rights: Public domain in the USA.</p>
+</div>
+</content>
+<id>urn:gutenberg:79876:3</id>
+<published>2026-10-28T00:00:00+00:00</published>
+<rights>Public domain in the USA.</rights>
+<contributor>
+<name>Duer, Douglas</name>
+</contributor>
+<author>
+<name>Ostrander, Isabel</name>
+</author>
+<category scheme="http://purl.org/dc/terms/LCSH" term="Railroads -- Fiction"/><category scheme="http://purl.org/dc/terms/LCSH" term="Young women -- Fiction"/><category scheme="http://purl.org/dc/terms/LCSH" term="Love stories"/><category scheme="http://purl.org/dc/terms/LCSH" term="Alaska -- Fiction"/><category scheme="http://purl.org/dc/terms/LCSH" term="Mines and mineral resources -- Fiction"/>
+<category scheme="http://purl.org/dc/terms/LCC" term="PS" label="Language and Literatures: American and Canadian literature"/>
+<category scheme="http://purl.org/dc/terms/DCMIType" term="Text"/>
+<dcterms:language>en</dcterms:language>
+<relevance:score>1</relevance:score>
+<link type="application/epub+zip" rel="http://opds-spec.org/acquisition" title="EPUB3 (E-readers incl. Send-to-Kindle)" length="686400" href="https://www.gutenberg.org/ebooks/79876.epub3.images"/>
+<link type="application/epub+zip" rel="http://opds-spec.org/acquisition" title="EPUB (older e-readers)" length="681378" href="https://www.gutenberg.org/ebooks/79876.epub.images"/>
+<link type="application/x-mobipocket-ebook" rel="http://opds-spec.org/acquisition" title="Kindles (kf8)" length="1416367" href="https://www.gutenberg.org/ebooks/79876.kf8.images"/>
+<link type="application/x-mobipocket-ebook" rel="http://opds-spec.org/acquisition" title="Older Kindles" length="1377594" href="https://www.gutenberg.org/ebooks/79876.kindle.images"/>
+<link type="image/jpeg" rel="http://opds-spec.org/image" href="https://www.gutenberg.org/cache/epub/79876/pg79876.cover.medium.jpg"/>
+<link type="image/jpeg" rel="http://opds-spec.org/image/thumbnail" href="https://www.gutenberg.org/cache/epub/79876/pg79876.cover.small.jpg"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/author/33851.opds" title="By Ostrander, Isabel…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/author/8878.opds" title="By Duer, Douglas…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/896.opds" title="On Railroads -- Fiction…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/2481.opds" title="On Young women -- Fiction…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/2487.opds" title="On Love stories…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/3141.opds" title="On Alaska -- Fiction…"/>
+<link type="application/atom+xml;profile=opds-catalog" rel="related" href="/ebooks/subject/14595.opds" title="On Mines and mineral resources -- Fiction…"/>
+</entry>
+</feed>

@@ -22,6 +22,44 @@ void BookListModel::setBooks(const QList<Book> &books, const QHash<qlonglong, QS
     endResetModel();
 }
 
+void BookListModel::appendBooks(const QList<Book> &books, const QHash<qlonglong, QString> &coverUrls)
+{
+    if (books.isEmpty())
+        return;
+    const int first = static_cast<int>(m_books.size());
+    beginInsertRows({}, first, first + static_cast<int>(books.size()) - 1);
+    for (const Book &book : books) {
+        m_rowForId.insert(book.id, static_cast<int>(m_books.size()));
+        m_books.append(book);
+    }
+    m_coverUrls.insert(coverUrls);
+    endInsertRows();
+}
+
+bool BookListModel::updateBook(const Book &book)
+{
+    const auto it = m_rowForId.constFind(book.id);
+    if (it == m_rowForId.constEnd())
+        return false;
+    m_books[it.value()] = book;
+    const QModelIndex modelIndex = index(it.value());
+    Q_EMIT dataChanged(modelIndex, modelIndex);
+    return true;
+}
+
+QVariantList BookListModel::formatsToVariant(const QList<BookFormat> &formats)
+{
+    QVariantList result;
+    result.reserve(formats.size());
+    for (const BookFormat &format : formats) {
+        QVariantMap entry;
+        entry.insert(QStringLiteral("format"), format.format);
+        entry.insert(QStringLiteral("fileName"), format.fileName);
+        result.append(entry);
+    }
+    return result;
+}
+
 void BookListModel::setCoverRequestHandler(const std::function<void(qlonglong)> &handler)
 {
     m_coverRequestHandler = handler;
@@ -33,7 +71,7 @@ bool BookListModel::setCover(qlonglong bookId, const QString &coverUrl)
         return false;
     m_coverUrls.insert(bookId, coverUrl);
     const QModelIndex modelIndex = index(m_rowForId.value(bookId));
-    Q_EMIT dataChanged(modelIndex, modelIndex, {CoverRole});
+    Q_EMIT dataChanged(modelIndex, modelIndex, {CoverRole, HasCoverRole});
     return true;
 }
 
@@ -71,17 +109,10 @@ QVariant BookListModel::data(const QModelIndex &index, int role) const
         return book.path;
     case CoverRole:
         return m_coverUrls.value(book.id);
-    case FormatsRole: {
-        QVariantList formats;
-        formats.reserve(book.formats.size());
-        for (const BookFormat &format : book.formats) {
-            QVariantMap entry;
-            entry.insert(QStringLiteral("format"), format.format);
-            entry.insert(QStringLiteral("fileName"), format.fileName);
-            formats.append(entry);
-        }
-        return formats;
-    }
+    case FormatsRole:
+        return formatsToVariant(book.formats);
+    case NeedsDetailsRole:
+        return !book.detailsUrl.isEmpty();
     default:
         return {};
     }
@@ -98,6 +129,7 @@ QHash<int, QByteArray> BookListModel::roleNames() const
     roles.insert(PathRole, QByteArrayLiteral("path"));
     roles.insert(FormatsRole, QByteArrayLiteral("formats"));
     roles.insert(CoverRole, QByteArrayLiteral("cover"));
+    roles.insert(NeedsDetailsRole, QByteArrayLiteral("needsDetails"));
     return roles;
 }
 

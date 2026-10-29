@@ -7,6 +7,7 @@
 #include <QList>
 #include <QSet>
 #include <QString>
+#include <QVariantList>
 #include <functional>
 
 namespace KalibreBox
@@ -31,7 +32,8 @@ public:
         HasCoverRole,
         PathRole,
         FormatsRole,
-        CoverRole
+        CoverRole,
+        NeedsDetailsRole
     };
     Q_ENUM(Role)
 
@@ -40,6 +42,12 @@ public:
     /// Ids of the books in rows [first, last], clamped to the list.
     QList<qlonglong> bookIdsInRange(int first, int last) const;
     void setBooks(const QList<Book> &books, const QHash<qlonglong, QString> &coverUrls);
+    /// Adds books at the end without resetting the view (catalogue paging).
+    void appendBooks(const QList<Book> &books, const QHash<qlonglong, QString> &coverUrls);
+    /// Replaces the stored book with the same id; false if it is not listed.
+    bool updateBook(const Book &book);
+
+    static QVariantList formatsToVariant(const QList<BookFormat> &formats);
 
     /**
      * CoverRole invokes this once per book that has no cached cover yet,

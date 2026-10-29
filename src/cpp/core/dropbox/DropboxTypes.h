@@ -14,7 +14,7 @@ struct DropboxEntry {
     qint64 size = 0;
     QString id;
 
-    bool isFile() const
+    [[nodiscard]] bool isFile() const
     {
         return !isFolder;
     }
@@ -36,7 +36,7 @@ struct DropboxFileMetadata {
     QString contentHash;
     qint64 size = 0;
     qint64 serverModifiedEpoch = 0; ///< Unix epoch seconds (0 when unavailable).
-    bool isFile() const
+    [[nodiscard]] bool isFile() const
     {
         return size >= 0;
     }

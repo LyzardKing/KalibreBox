@@ -59,7 +59,10 @@ bool launch(const QString &path, bool share, QString *error)
                                 jstr(QStringLiteral("android.intent.extra.STREAM")).object<jstring>(),
                                 uri.object());
     } else {
-        intent.callObjectMethod("setDataAndType", "(Landroid/net/Uri;Ljava/lang/String;)Landroid/content/Intent;", uri.object(), jstr(mimeType).object<jstring>());
+        intent.callObjectMethod("setDataAndType",
+                                "(Landroid/net/Uri;Ljava/lang/String;)Landroid/content/Intent;",
+                                uri.object(),
+                                jstr(mimeType).object<jstring>());
     }
     intent.callObjectMethod("addFlags", "(I)Landroid/content/Intent;", kGrantReadUriPermission);
 

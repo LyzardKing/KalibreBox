@@ -34,20 +34,20 @@ public:
     ~DropboxAuthProvider() override;
 
     /// Resolves the app key: explicit override > settings > env > compile-time.
-    QString appKey() const;
+    [[nodiscard]] QString appKey() const;
     void setAppKey(const QString &appKey);
 
     /// Resolved OAuth mode: "code" (default) or "loopback".
-    QString oauthMode() const;
+    [[nodiscard]] QString oauthMode() const;
 
-    const std::optional<DropboxCredential> &credential() const
+    [[nodiscard]] const std::optional<DropboxCredential> &credential() const
     {
         return m_credential;
     }
     void setCredential(const DropboxCredential &credential);
     void logout();
 
-    bool isAuthenticating() const
+    [[nodiscard]] bool isAuthenticating() const
     {
         return m_authenticating;
     }

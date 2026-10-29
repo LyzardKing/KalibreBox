@@ -18,22 +18,22 @@ struct DropboxCredential {
     QString accountId;
     qint64 expiresAt = 0; ///< Unix epoch seconds when accessToken expires.
 
-    bool hasAccessToken() const
+    [[nodiscard]] bool hasAccessToken() const
     {
         return !accessToken.isEmpty();
     }
-    bool hasRefreshToken() const
+    [[nodiscard]] bool hasRefreshToken() const
     {
         return !refreshToken.isEmpty();
     }
 
     /// True when a refresh is needed before `marginSeconds` from now.
-    bool needsRefresh(qint64 marginSeconds = 60) const;
+    [[nodiscard]] bool needsRefresh(qint64 marginSeconds = 60) const;
 
     bool operator==(const DropboxCredential &other) const = default;
 
     // --- JSON round trip ---
-    QString toJson() const;
+    [[nodiscard]] QString toJson() const;
     static std::optional<DropboxCredential> fromJson(const QString &json);
 
     // --- Persistence (settings key mirrors the Android DropboxPrefs pilot) ---

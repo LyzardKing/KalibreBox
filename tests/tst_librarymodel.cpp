@@ -17,7 +17,7 @@ private slots:
 
 void tst_librarymodel::libraryDefaults()
 {
-    Library library;
+    Library const library;
     QVERIFY(library.id.isEmpty());
     QVERIFY(!library.isDefault);
     QVERIFY(!library.sharedLinkUrl.has_value());
@@ -29,7 +29,7 @@ void tst_librarymodel::libraryDefaults()
 
 void tst_librarymodel::bookDefaultsAndEquality()
 {
-    Book book;
+    Book const book;
     QCOMPARE(book.id, qlonglong(0));
     QCOMPARE(book.hasCover, false);
     QVERIFY(book.formats.isEmpty());

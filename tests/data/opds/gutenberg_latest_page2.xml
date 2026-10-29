@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:opds="http://opds-spec.org/2010/catalog" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:relevance="http://a9.com/-/opensearch/extensions/relevance/1.0/">
+<id>http://www.gutenberg.org/ebooks/search.opds/?sort_order=release_date&amp;start_index=26</id>
+<updated>2026-10-28T22:36:20Z</updated>
+<title>All Books</title>
+<subtitle>Free eBooks since 1971.</subtitle>
+<author>
+<name>Project Gutenberg</name>
+<uri>https://www.gutenberg.org</uri>
+<email>webmaster@gutenberg.org</email>
+</author>
+<icon>https://www.gutenberg.org/gutenberg/favicon.ico</icon>
+<link rel="search" type="application/opensearchdescription+xml" title="Project Gutenberg Catalog Search" href="https://www.gutenberg.org/catalog/osd-books.xml"/>
+<link rel="self" title="This Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks/search.opds/?sort_order=release_date&amp;start_index=26"/>
+<link rel="alternate" type="text/html" title="HTML Page" href="/ebooks/search/?sort_order=release_date&amp;start_index=26"/>
+<link rel="start" title="Start Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks.opds/"/>
+<link rel="first" title="First Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks/search.opds/?sort_order=release_date"/>
+<link rel="previous" title="Previous Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks/search.opds/?sort_order=release_date"/>
+<link rel="next" title="Next Page" type="application/atom+xml;profile=opds-catalog" href="/ebooks/search.opds/?sort_order=release_date&amp;start_index=51"/>
+<opensearch:itemsPerPage>25</opensearch:itemsPerPage>
+<opensearch:startIndex>26</opensearch:startIndex>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79851.opds</id>
+<title>Faith killer</title>
+<content type="text">Winston K. Marks</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79851.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79850.opds</id>
+<title>Nothing but terror</title>
+<content type="text">Jesse F. Bone</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79850.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79849.opds</id>
+<title>The preparation</title>
+<content type="text">Helen R. Hull</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79849.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79848.opds</id>
+<title>Dry-law debate :  Clarence Darrow vs. Wayne B. Wheeler</title>
+<content type="text">Clarence Darrow and Wayne Bidwell Wheeler</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79848.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79847.opds</id>
+<title>On shipboard</title>
+<content type="text">Anne Atherton Starrett Craig</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79847.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79846.opds</id>
+<title>The written leaves :  A story of the new year and other holiday stories</title>
+<content type="text">Belle Belleville</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79846.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79845.opds</id>
+<title>You can't print that! :  The truth behind the news 1918-1928</title>
+<content type="text">George Seldes</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79845.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79844.opds</id>
+<title>The return</title>
+<content type="text">Helen R. Hull</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79844.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79843.opds</id>
+<title>Married in haste</title>
+<content type="text">Ann S. Stephens</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79843.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79842.opds</id>
+<title>The temple</title>
+<content type="text">H. P. Lovecraft</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79842.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79841.opds</id>
+<title>The Congo :  a report of the Commission of enquiry appointed by the Congo Free State government</title>
+<content type="text">Congo Free State. Commission to Investigate the State Territories</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79841.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79840.opds</id>
+<title>Young people abroad</title>
+<content type="text">Oct 22, 2026</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79840.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79839.opds</id>
+<title>Claude Monet :  Sa vie, son temps, son œuvre (French)</title>
+<content type="text">Gustave Geffroy</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79839.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79838.opds</id>
+<title>Textiles; a handbook for the student and the consumer</title>
+<content type="text">Mary Schenck Woolman and Ellen Beers McGowan</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79838.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79837.opds</id>
+<title>Im Bernsteinwald (German)</title>
+<content type="text">Wilhelm Bölsche</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79837.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79836.opds</id>
+<title>Pendragon (French)</title>
+<content type="text">Alfred Assollant</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79836.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79835.opds</id>
+<title>Inhibition, symptom and anxiety</title>
+<content type="text">Sigmund Freud</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79835.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79834.opds</id>
+<title>The city of the blind</title>
+<content type="text">Murray Leinster</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79834.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79833.opds</id>
+<title>The Bishop's emeralds</title>
+<content type="text">Houghton Townley</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79833.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79832.opds</id>
+<title>A deputy was king</title>
+<content type="text">G. B. Stern</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79832.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79831.opds</id>
+<title>Realmah</title>
+<content type="text">Sir Arthur Helps</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79831.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79830.opds</id>
+<title>Prátaí Ṁíċíl Ṫaiḋg (Irish)</title>
+<content type="text">Séamus Ó Dubhghaill</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79830.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79829.opds</id>
+<title>Emptiness :  War story</title>
+<content type="text">Helen R. Hull</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79829.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79828.opds</id>
+<title>The man who was two men</title>
+<content type="text">Ray Cummings</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79828.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+<entry>
+<updated>2026-10-28T22:36:20Z</updated>
+<id>https://www.gutenberg.org/ebooks/79827.opds</id>
+<title>The wanderer :  (Le grand Meaulnes)</title>
+<content type="text">Alain-Fournier</content>
+<link type="application/atom+xml;profile=opds-catalog" rel="subsection" href="/ebooks/79827.opds"/>
+<link type="image/png" rel="http://opds-spec.org/image/thumbnail" href="data:image/png;base64,iVBORw0KGgo="/>
+</entry>
+</feed>
