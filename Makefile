@@ -1,3 +1,7 @@
+# Variables
+PACKAGE_NAME ?= org.kde.kalibrebox
+MAIN_ACTIVITY ?= org.kde.kalibrebox.MainActivity
+
 .PHONY: build clean start-android start-android-arm32 build-android build-android-arm32 \
 	sign-android sign-android-arm32 install-android logcat lint lint-cpp lint-qml lint-fix format
 
@@ -47,7 +51,7 @@ sign-android:
 	$(call android_craft,cd /home/user/CraftRoot/tmp && \
 	cp /home/user/CraftRoot/build/apps/kalibrebox/work/build/android-build/build/outputs/apk/release/android-build-release-unsigned.apk /home/user/CraftRoot/tmp && \
 	$$ANDROID_HOME/build-tools/$$ANDROID_BUILD_TOOLS_REVISION/zipalign -p -f -v 4 android-build-release-unsigned.apk kalibrebox.signed.apk && \
-	$$ANDROID_HOME/build-tools/$$ANDROID_BUILD_TOOLS_REVISION/apksigner sign --verbose --ks key.keystore kalibrebox.signed.apk)
+	$$ANDROID_HOME/build-tools/$$ANDROID_BUILD_TOOLS_REVISION/apksigner sign --verbose --ks key.keystore --ks-pass pass:123456 kalibrebox.signed.apk)
 	cp $(CRAFT_ROOT)/tmp/kalibrebox.signed.apk .
 
 sign-android-arm32:
@@ -80,4 +84,30 @@ lint-fix:
 # Reformat C++ (KDE's clang-format style) and QML (qmlformat) sources in place.
 format:
 	cmake --build build --target clang-format qmlformat
+
+## run: Install and launch the app on a connected device
+run: install
+	@echo "Launching $(PACKAGE_NAME)..."
+	$(ADB) shell am start -n $(PACKAGE_NAME)/$(MAIN_ACTIVITY)
+	@echo "Launch successful."
+
 	
+## emulate: Launch the app in an Android emulator
+# sdkmanager "platform-tools" "emulator" "system-images;android-34;google_apis;x86_64"
+# avdmanager create avd -n test -k "system-images;android-34;google_apis;x86_64"
+AVD_NAME ?= test
+ADB = adb
+EMULATOR_SDK = $(shell brew --prefix)/share/android-commandlinetools
+# Scoped to emulate so gradle builds don't pick up (and download into) the brew SDK
+emulate: export ANDROID_HOME = $(EMULATOR_SDK)
+emulate: export ANDROID_SDK_ROOT = $(EMULATOR_SDK)
+emulate: export PATH := $(EMULATOR_SDK)/cmdline-tools/latest/bin:$(EMULATOR_SDK)/platform-tools:$(EMULATOR_SDK)/emulator:$(PATH)
+
+emulate:
+	@echo "Launching emulator..."
+	@nohup emulator -avd $(AVD_NAME) >/tmp/emulator.log 2>&1 &
+	@echo "Waiting for emulator to boot..."
+	$(ADB) wait-for-device
+	@until [ "$$($(ADB) shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do sleep 2; done
+	@echo "Installing and launching app on emulator..."
+	$(MAKE) run

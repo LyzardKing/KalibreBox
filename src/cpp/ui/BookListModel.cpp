@@ -118,6 +118,29 @@ QVariant BookListModel::data(const QModelIndex &index, int role) const
     }
 }
 
+QVariantMap BookListModel::bookSnapshot(qlonglong bookId) const
+{
+    QVariantMap snapshot;
+    const auto it = m_rowForId.constFind(bookId);
+    if (it == m_rowForId.constEnd())
+        return snapshot;
+    const Book &book = m_books.at(it.value());
+    snapshot.insert(QStringLiteral("bookId"), book.id);
+    snapshot.insert(QStringLiteral("title"), book.title);
+    snapshot.insert(QStringLiteral("authors"), book.authors);
+    snapshot.insert(QStringLiteral("comment"), book.comment);
+    snapshot.insert(QStringLiteral("path"), book.path);
+    snapshot.insert(QStringLiteral("formats"), formatsToVariant(book.formats));
+    snapshot.insert(QStringLiteral("cover"), m_coverUrls.value(book.id));
+    return snapshot;
+}
+
+bool BookListModel::bookNeedsDetails(qlonglong bookId) const
+{
+    const auto it = m_rowForId.constFind(bookId);
+    return it != m_rowForId.constEnd() && !m_books.at(it.value()).detailsUrl.isEmpty();
+}
+
 QHash<int, QByteArray> BookListModel::roleNames() const
 {
     QHash<int, QByteArray> roles;

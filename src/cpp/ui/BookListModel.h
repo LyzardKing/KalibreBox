@@ -8,6 +8,7 @@
 #include <QSet>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 #include <functional>
 
 namespace KalibreBox
@@ -61,6 +62,14 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
+
+    /**
+     * Fields the grid delegate needs only when a tile is tapped, built here so
+     * the delegate itself can bind to just the light roles without over-fetching
+     * formats/comments on every bind during a scroll.
+     */
+    Q_INVOKABLE QVariantMap bookSnapshot(qlonglong bookId) const;
+    Q_INVOKABLE bool bookNeedsDetails(qlonglong bookId) const;
 
 private:
     QList<Book> m_books;

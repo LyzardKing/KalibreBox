@@ -110,7 +110,9 @@ Kirigami.Page {
         anchors.fill: parent
         clip: true
         reuseItems: true
-        cacheBuffer: cellHeight * 2
+        // Roughly one screen beyond the viewport, so flicking does not run
+        // into delegate-creation walls almost immediately.
+        cacheBuffer: (Math.ceil(height / cellHeight) + 3) * cellHeight
 
         readonly property real coverWidth: Kirigami.Units.gridUnit * 6.5
         readonly property real coverHeight: coverWidth * 1.5
@@ -170,7 +172,12 @@ Kirigami.Page {
         delegate: Item {
             id: cell
             required property int index
-            required property var model
+            // Bind to the light roles only: the heavy ones (authors, comment,
+            // formats, …) are fetched on tap through the snapshot invokables,
+            // not on every bind while scrolling.
+            required property int bookId
+            required property string title
+            required property string cover
 
             width: grid.cellWidth
             height: grid.cellHeight
@@ -178,27 +185,16 @@ Kirigami.Page {
             // AbstractCard supplies the card background and press feedback.
             Kirigami.AbstractCard {
                 id: tileDelegate
-                readonly property var model: cell.model
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: grid.coverWidth + 2 * padding
                 height: parent.height - grid.gap
                 padding: Kirigami.Units.smallSpacing
                 showClickFeedback: true
                 onClicked: {
-                    // Snapshot: the delegate's model object dies with the delegate.
-                    const m = cell.model;
-                    root.bookDetailsRequested({
-                        bookId: m.bookId,
-                        title: m.title,
-                        authors: m.authors,
-                        comment: m.comment,
-                        path: m.path,
-                        formats: m.formats,
-                        cover: m.cover
-                    });
+                    root.bookDetailsRequested(grid.model.bookSnapshot(cell.bookId));
                     // Catalogue stubs only learn their formats when opened.
-                    if (m.needsDetails)
-                        LibraryController.loadBookDetails(m.bookId);
+                    if (grid.model.bookNeedsDetails(cell.bookId))
+                        LibraryController.loadBookDetails(cell.bookId);
                 }
 
                 contentItem: Column {
@@ -218,22 +214,23 @@ Kirigami.Page {
                             anchors.fill: parent
                             asynchronous: true
                             fillMode: Image.PreserveAspectCrop
-                            sourceSize.width: width
-                            visible: tileDelegate.model.cover !== ""
-                            source: tileDelegate.model.cover
+                            sourceSize.width: grid.coverWidth
+                            sourceSize.height: grid.coverHeight
+                            visible: cell.cover !== ""
+                            source: cell.cover
                         }
                         Kirigami.Icon {
                             anchors.centerIn: parent
                             width: Kirigami.Units.iconSizes.large
                             height: width
                             source: "application-epub+zip"
-                            visible: tileDelegate.model.cover === ""
+                            visible: cell.cover === ""
                         }
                     }
                     Controls.Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: grid.coverWidth
-                        text: tileDelegate.model.title
+                        text: cell.title
                         maximumLineCount: 2
                         wrapMode: Text.WordWrap
                         elide: Text.ElideRight
