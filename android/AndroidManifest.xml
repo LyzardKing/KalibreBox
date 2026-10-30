@@ -9,7 +9,10 @@
 
     <application
         android:label="KalibreBox"
-        android:allowBackup="true"
+        <!-- No auto backup: the Dropbox tokens are stored unencrypted (see TODO.md),
+             so ever copying them into Google cloud backups must be opt-in later,
+             once tokens are not stored in plaintext. -->
+        android:allowBackup="false"
         android:hardwareAccelerated="true">
 
         <!-- Lets other apps read downloaded books from the cache (open/share). -->

@@ -166,11 +166,11 @@ SearchTarget Feed::searchTarget() const
             continue;
         if (link.type.contains(QLatin1String("opensearchdescription"), Qt::CaseInsensitive)) {
             if (description.kind == SearchKind::None)
-                description = {SearchKind::Description, link.href};
+                description = {.kind = SearchKind::Description, .href = link.href};
             continue;
         }
         if (link.templated || link.href.contains(u'{'))
-            return {SearchKind::Template, link.href};
+            return {.kind = SearchKind::Template, .href = link.href};
     }
     return description;
 }

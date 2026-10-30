@@ -130,7 +130,7 @@ QString DropboxAuthProvider::appKey() const
             return fromSettings;
     }
 
-    const QString fromEnv = qEnvironmentVariable("KALIBREBOX_DROPBOX_APP_KEY");
+    QString fromEnv = qEnvironmentVariable("KALIBREBOX_DROPBOX_APP_KEY");
     if (!fromEnv.isEmpty())
         return fromEnv;
 
@@ -161,7 +161,7 @@ QString DropboxAuthProvider::oauthMode() const
     const auto isValidMode = [](const QString &mode) {
         return mode == QLatin1String("code") || mode == QLatin1String("loopback");
     };
-    const QString env = qEnvironmentVariable("KALIBREBOX_DROPBOX_OAUTH_MODE");
+    QString env = qEnvironmentVariable("KALIBREBOX_DROPBOX_OAUTH_MODE");
     if (isValidMode(env))
         return env;
     if (m_settings) {
@@ -221,10 +221,10 @@ void DropboxAuthProvider::completeDirectSignIn(const QString &code)
 
     // Accept a bare code or a whole pasted URL/parameter line.
     QString trimmed = code.trimmed();
-    const int codeIndex = trimmed.indexOf(QStringLiteral("code="));
+    const qsizetype codeIndex = trimmed.indexOf(QStringLiteral("code="));
     if (codeIndex >= 0) {
         QString extracted = trimmed.mid(codeIndex + 5);
-        const int amp = extracted.indexOf(u'&');
+        const qsizetype amp = extracted.indexOf(u'&');
         if (amp >= 0)
             extracted.truncate(amp);
         trimmed = QUrl::fromPercentEncoding(extracted.toUtf8()).trimmed();

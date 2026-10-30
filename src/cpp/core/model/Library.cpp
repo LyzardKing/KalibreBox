@@ -12,7 +12,7 @@ QString Library::displayNameFromPath(const QString &path)
     QString name = trimmed;
     while (name.endsWith(u'/'))
         name.chop(1);
-    const int slash = name.lastIndexOf(u'/');
+    const qsizetype slash = name.lastIndexOf(u'/');
     if (slash >= 0)
         name = name.mid(slash + 1);
     if (name.isEmpty())

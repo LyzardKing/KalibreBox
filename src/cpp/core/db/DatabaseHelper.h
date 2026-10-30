@@ -33,6 +33,13 @@ public:
     /// Deletes the local database file(s). Empty libraryId clears all libraries.
     static bool clearDatabase(const QString &libraryId = {});
 
+    /**
+     * Atomically replaces the stored metadata copy of a library with `partPath`
+     * (a freshly downloaded file) and reopens the connection. Used by the sync
+     * flow so a failed download never destroys the previous offline copy.
+     */
+    static bool replaceDatabase(const QString &libraryId, const QString &partPath);
+
     static QList<Book> getBooks(const QString &libraryId);
     /// Names of all authors that have at least one book, in Calibre's sort order.
     static QStringList getAuthors(const QString &libraryId);

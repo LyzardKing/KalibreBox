@@ -71,14 +71,14 @@ CPP_FILES = $(shell git ls-files 'src/*.cpp' 'src/*.h' 'tests/*.cpp' 'tests/*.h'
 lint: lint-cpp lint-qml
 
 lint-cpp:
-	clang-tidy -p build $(CPP_SOURCES)
+	run-clang-tidy -p build $(CPP_SOURCES)
 	clang-format --dry-run --Werror $(CPP_FILES)
 
 lint-qml:
 	cmake --build build --target kalibrebox_qmllint
 
 lint-fix:
-	clang-tidy -p build $(CPP_SOURCES) --fix
+	run-clang-tidy -p build $(CPP_SOURCES) -fix
 	clang-format -i $(CPP_FILES)
 
 # Reformat C++ (KDE's clang-format style) and QML (qmlformat) sources in place.

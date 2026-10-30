@@ -110,6 +110,21 @@ bool DatabaseHelper::clearDatabase(const QString &libraryId)
     return true;
 }
 
+bool DatabaseHelper::replaceDatabase(const QString &libraryId, const QString &partPath)
+{
+    if (!QFileInfo::exists(partPath))
+        return false;
+    // The connection must not hold the file(s) while they are swapped
+    // (rename-over-existing fails on Windows while open).
+    closeLibrary(libraryId);
+    const QString filePath = databaseFilePath(libraryId);
+    if (QFileInfo::exists(filePath) && !QFile::remove(filePath))
+        return false;
+    if (!QFile::rename(partPath, filePath))
+        return false;
+    return openLibrary(libraryId);
+}
+
 QList<Book> DatabaseHelper::getBooks(const QString &libraryId)
 {
     QList<Book> books;
@@ -203,7 +218,7 @@ QList<BookFormat> DatabaseHelper::parseFormats(const QString &formatsAndFiles)
         return formats;
 
     for (const QString &entry : formatsAndFiles.split(groupSeparator, Qt::SkipEmptyParts)) {
-        const int colon = entry.indexOf(u':');
+        const qsizetype colon = entry.indexOf(u':');
         if (colon < 0)
             continue;
         formats.append({.format = entry.left(colon), .fileName = entry.mid(colon + 1)});

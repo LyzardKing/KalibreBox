@@ -41,6 +41,8 @@ Library makeLibrary(const QString &id, const QString &name, const QString &path,
 
 } // namespace
 
+namespace
+{
 class tst_libraryrepository : public QObject
 {
     Q_OBJECT
@@ -64,6 +66,7 @@ private slots:
     void legacyJsonLoadsAsDropbox();
     void displayNameFromUrl();
 };
+}
 
 void tst_libraryrepository::startsEmpty()
 {

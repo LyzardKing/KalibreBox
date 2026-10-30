@@ -72,7 +72,7 @@ public:
     RequestId fetchFeed(const QUrl &url, std::function<void(const FeedResult &)> done) override
     {
         const RequestId id = begin(url);
-        schedule(id, [this, url, done = std::move(done)]() {
+        schedule(id, [this, url, done = std::move(done)] {
             FeedResult result;
             const auto it = routes.constFind(key(url.toString()));
             result.url = url;
@@ -93,7 +93,7 @@ public:
     RequestId fetchBytes(const QUrl &url, std::function<void(const BytesResult &)> done) override
     {
         const RequestId id = begin(url);
-        schedule(id, [this, url, done = std::move(done)]() {
+        schedule(id, [this, url, done = std::move(done)] {
             BytesResult result;
             result.url = url;
             const auto it = routes.constFind(key(url.toString()));
@@ -141,10 +141,10 @@ private:
     void schedule(RequestId id, std::function<void()> deliver)
     {
         if (hold) {
-            m_pending.append({id, std::move(deliver)});
+            m_pending.append({.id = id, .deliver = std::move(deliver)});
             return;
         }
-        QTimer::singleShot(0, [this, id, deliver = std::move(deliver)]() {
+        QTimer::singleShot(0, [this, id, deliver = std::move(deliver)] {
             if (!m_cancelled.contains(id))
                 deliver();
         });
@@ -159,7 +159,7 @@ private:
 struct Collector {
     explicit Collector(OpdsSource *source)
     {
-        QObject::connect(source, &OpdsSource::reset, source, [this]() {
+        QObject::connect(source, &OpdsSource::reset, source, [this] {
             books.clear();
         });
         QObject::connect(source, &OpdsSource::booksAdded, source, [this](const QList<Book> &added) {
@@ -264,7 +264,7 @@ void tst_opdssource::gutenbergLargerBatchSpansPages()
     FakeTransport transport;
     routeGutenberg(transport);
     OpdsSource source(&transport);
-    Collector collected(&source);
+    Collector const collected(&source);
     source.setRoot(QUrl(gutenbergRoot));
     source.setBatchSize(40);
 
@@ -397,7 +397,7 @@ void tst_opdssource::calibreRootIsTheListing()
     transport.route(calibreRoot, fixture("calibre_newest.xml"));
     transport.route(calibreNext, atomFeed({}, bookEntry("c", "Third")));
     OpdsSource source(&transport);
-    Collector collected(&source);
+    Collector const collected(&source);
     source.setRoot(QUrl(calibreRoot));
 
     source.load({});
@@ -437,7 +437,7 @@ void tst_opdssource::calibreSearchUsesTheTemplate()
     transport.route(QStringLiteral("http://192.168.1.10:8080/opds/search/frank%20herbert?library_id=My_Library"), fixture("calibre_newest.xml"));
     transport.route(calibreNext, atomFeed({}, {}));
     OpdsSource source(&transport);
-    Collector collected(&source);
+    Collector const collected(&source);
     source.setRoot(QUrl(calibreRoot));
 
     source.load(QStringLiteral("frank herbert"));
@@ -453,7 +453,7 @@ void tst_opdssource::searchWithoutServerSupportIsLocalOnly()
     FakeTransport transport;
     transport.route(calibreRoot, atomFeed({}, bookEntry("a", "Alpha") + bookEntry("b", "Beta")));
     OpdsSource source(&transport);
-    Collector collected(&source);
+    Collector const collected(&source);
     source.setRoot(QUrl(calibreRoot));
 
     source.load(QStringLiteral("alp"));
@@ -524,7 +524,7 @@ void tst_opdssource::emptyResultsAreReported()
     transport.route(calibreRoot, atomFeed("<link rel='search' type='application/atom+xml' href='/opds/search/{searchTerms}'/>", bookEntry("a", "Alpha")));
     transport.route(QStringLiteral("http://192.168.1.10:8080/opds/search/zzz"), atomFeed({}, {}));
     OpdsSource source(&transport);
-    Collector collected(&source);
+    Collector const collected(&source);
     source.setRoot(QUrl(calibreRoot));
 
     source.load(QStringLiteral("zzz"));
@@ -539,7 +539,7 @@ void tst_opdssource::selfLinkingFeedsDoNotLoop()
     FakeTransport transport;
     transport.route(calibreRoot, atomFeed("<link rel='next' type='application/atom+xml' href='/opds'/>", bookEntry("a", "Alpha")));
     OpdsSource source(&transport);
-    Collector collected(&source);
+    Collector const collected(&source);
     source.setRoot(QUrl(calibreRoot));
     source.setBatchSize(5);
 

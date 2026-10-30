@@ -36,7 +36,7 @@ void tst_opdslive::latestSearchDetailsAndDownload()
 
     QList<Book> books;
     QStringList failures;
-    connect(&source, &OpdsSource::reset, this, [&books]() {
+    connect(&source, &OpdsSource::reset, this, [&books] {
         books.clear();
     });
     connect(&source, &OpdsSource::booksAdded, this, [&books](const QList<Book> &added) {
@@ -87,7 +87,7 @@ void tst_opdslive::latestSearchDetailsAndDownload()
     QVERIFY(!detailed.formats.isEmpty());
 
     // The first format really downloads.
-    QTemporaryDir dir;
+    QTemporaryDir const dir;
     const BookFormat &format = detailed.formats.first();
     const QString target = dir.filePath(QStringLiteral("book.") + format.extension);
     std::optional<FileResult> download;

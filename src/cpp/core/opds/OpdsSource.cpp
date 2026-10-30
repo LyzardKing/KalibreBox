@@ -18,21 +18,21 @@ struct MimeExtension {
 };
 
 constexpr MimeExtension mimeExtensions[] = {
-    {"application/epub+zip", "epub"},
-    {"application/pdf", "pdf"},
-    {"application/x-mobipocket-ebook", "mobi"},
-    {"application/vnd.amazon.ebook", "azw3"},
-    {"application/vnd.amazon.mobi8-ebook", "azw3"},
-    {"application/x-fictionbook+xml", "fb2"},
-    {"application/fb2+zip", "fb2.zip"},
-    {"application/x-cbz", "cbz"},
-    {"application/vnd.comicbook+zip", "cbz"},
-    {"application/x-cbr", "cbr"},
-    {"image/vnd.djvu", "djvu"},
-    {"application/rtf", "rtf"},
-    {"text/plain", "txt"},
-    {"text/html", "html"},
-    {"application/zip", "zip"},
+    {.mime = "application/epub+zip", .extension = "epub"},
+    {.mime = "application/pdf", .extension = "pdf"},
+    {.mime = "application/x-mobipocket-ebook", .extension = "mobi"},
+    {.mime = "application/vnd.amazon.ebook", .extension = "azw3"},
+    {.mime = "application/vnd.amazon.mobi8-ebook", .extension = "azw3"},
+    {.mime = "application/x-fictionbook+xml", .extension = "fb2"},
+    {.mime = "application/fb2+zip", .extension = "fb2.zip"},
+    {.mime = "application/x-cbz", .extension = "cbz"},
+    {.mime = "application/vnd.comicbook+zip", .extension = "cbz"},
+    {.mime = "application/x-cbr", .extension = "cbr"},
+    {.mime = "image/vnd.djvu", .extension = "djvu"},
+    {.mime = "application/rtf", .extension = "rtf"},
+    {.mime = "text/plain", .extension = "txt"},
+    {.mime = "text/html", .extension = "html"},
+    {.mime = "application/zip", .extension = "zip"},
 };
 
 QString safeFileName(const QString &title)
@@ -184,7 +184,7 @@ void OpdsSource::load(const QString &query)
     if (generation != m_generation)
         return; // a slot started another load
     setLoading(true);
-    discover(generation, [this, generation]() {
+    discover(generation, [this, generation] {
         startListing(generation);
     });
 }
@@ -280,7 +280,7 @@ void OpdsSource::startListing(quint64 generation)
         fetchPage(generation, m_browseUrl, m_batchSize, maxPagesPerStep);
         return;
     }
-    resolveSearch(generation, [this, generation]() {
+    resolveSearch(generation, [this, generation] {
         if (m_searchTemplate.isEmpty()) {
             m_localOnly = true;
             fetchPage(generation, m_browseUrl, m_batchSize, maxPagesPerStep);

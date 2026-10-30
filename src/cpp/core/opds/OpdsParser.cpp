@@ -224,7 +224,7 @@ QStringList nameList(const QJsonValue &value)
     };
     if (value.isArray()) {
         const QJsonArray array = value.toArray();
-        for (const QJsonValue &item : array)
+        for (const auto &item : array)
             addOne(item);
     } else if (!value.isUndefined() && !value.isNull()) {
         addOne(value);
@@ -236,7 +236,7 @@ QList<Link> linksFromJson(const QJsonValue &value, const QUrl &base, const QStri
 {
     QList<Link> links;
     const QJsonArray array = value.toArray();
-    for (const QJsonValue &item : array) {
+    for (const auto &item : array) {
         const QJsonObject object = item.toObject();
         Link link;
         link.href = resolveHref(base, object.value(QLatin1String("href")).toString());
@@ -256,7 +256,7 @@ QList<Link> linksFromJson(const QJsonValue &value, const QUrl &base, const QStri
             rels.append(relValue.toString());
         } else if (relValue.isArray()) {
             const QJsonArray relArray = relValue.toArray();
-            for (const QJsonValue &rel : relArray)
+            for (const auto &rel : relArray)
                 rels.append(rel.toString());
         }
         if (rels.isEmpty())
@@ -335,10 +335,10 @@ Entry entryFromNavigation(const QJsonObject &item, const QUrl &base)
 void appendEntries(const QJsonObject &object, const QUrl &base, QList<Entry> *entries)
 {
     const QJsonArray navigation = object.value(QLatin1String("navigation")).toArray();
-    for (const QJsonValue &item : navigation)
+    for (const auto &item : navigation)
         entries->append(entryFromNavigation(item.toObject(), base));
     const QJsonArray publications = object.value(QLatin1String("publications")).toArray();
-    for (const QJsonValue &item : publications)
+    for (const auto &item : publications)
         entries->append(entryFromPublication(item.toObject(), base));
 }
 
@@ -471,7 +471,7 @@ std::optional<Feed> parseJsonFeed(const QByteArray &body, const QUrl &baseUrl, Q
     appendEntries(root, baseUrl, &feed.entries);
 
     const QJsonArray groups = root.value(QLatin1String("groups")).toArray();
-    for (const QJsonValue &item : groups) {
+    for (const auto &item : groups) {
         const QJsonObject groupObject = item.toObject();
         Group group;
         group.title = localizedString(groupObject.value(QLatin1String("metadata")).toObject().value(QLatin1String("title")));

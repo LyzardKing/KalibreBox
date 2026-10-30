@@ -7,7 +7,6 @@
 #include "core/dropbox/DropboxUrls.h"
 #include "core/opds/OpdsClient.h"
 #include "core/opds/OpdsSource.h"
-#include "ui/AndroidDownloads.h"
 #include "ui/AndroidFiles.h"
 
 #include <QCryptographicHash>
@@ -23,13 +22,13 @@
 
 #include <algorithm>
 
-Q_LOGGING_CATEGORY(kalibreboxCore, "kalibrebox.core")
-
 namespace KalibreBox
 {
 
 namespace
 {
+Q_LOGGING_CATEGORY(kalibreboxCore, "kalibrebox.core")
+
 // Kept out of the library JSON; stored unencrypted like the Dropbox tokens.
 QString opdsPasswordKey(const QString &libraryId)
 {
@@ -46,9 +45,7 @@ constexpr int kDarkTheme = 2;
 
 void applyTheme(int theme)
 {
-    const Qt::ColorScheme colorScheme = theme == kLightTheme ? Qt::ColorScheme::Light
-                                        : theme == kDarkTheme ? Qt::ColorScheme::Dark
-                                                              : Qt::ColorScheme::Unknown;
+    const Qt::ColorScheme colorScheme = theme == kLightTheme ? Qt::ColorScheme::Light : theme == kDarkTheme ? Qt::ColorScheme::Dark : Qt::ColorScheme::Unknown;
     QGuiApplication::styleHints()->setColorScheme(colorScheme);
 }
 
@@ -63,7 +60,7 @@ QString fileSafe(const QString &text)
 LibraryController::LibraryController(DropboxClient *client, QObject *parent)
     : QObject(parent)
     , m_client(client)
-    , m_repository(new LibraryRepository())
+    , m_repository(std::make_unique<LibraryRepository>())
     , m_model(new BookListModel(this))
     , m_opdsClient(new Opds::OpdsClient(this))
     , m_opds(new Opds::OpdsSource(m_opdsClient, this))
@@ -88,6 +85,8 @@ LibraryController::LibraryController(DropboxClient *client, QObject *parent)
     if (hasLibrary() && signedIn() && !isOpds())
         QTimer::singleShot(0, this, &LibraryController::syncLibrary);
 }
+
+LibraryController::~LibraryController() = default;
 
 void LibraryController::setupOpdsConnections()
 {
@@ -257,7 +256,7 @@ QString LibraryController::downloadFolderPath() const
         const QString treeMarker = QStringLiteral("/tree/");
         const qsizetype treeStart = path.indexOf(treeMarker);
         if (treeStart >= 0) {
-            const QString treeId = path.mid(treeStart + treeMarker.size());
+            QString treeId = path.mid(treeStart + treeMarker.size());
             const qsizetype volumeSeparator = treeId.indexOf(QLatin1Char(':'));
             if (volumeSeparator >= 0) {
                 const QString volume = treeId.left(volumeSeparator);
@@ -506,34 +505,42 @@ void LibraryController::downloadMetadata(const std::optional<Library> &library)
 
     setStatus(QStringLiteral("Downloading %1/metadata.db …").arg(current->dropboxPath));
 
+    // The fresh copy lands next to the live one and is swapped in only after
+    // the download succeeded, so a failed sync keeps the previous offline
+    // library (and the sync state that validates it) intact.
     const QString target = DatabaseHelper::databaseFilePath(current->id);
-    // Close any open connection and drop the stale copy first, so the
-    // freshly downloaded file is what SQLite opens afterwards.
-    DatabaseHelper::clearDatabase(current->id);
-    QSettings staleState;
-    staleState.remove(QStringLiteral("metadata_%1_size").arg(current->id));
-    staleState.remove(QStringLiteral("metadata_%1_modified").arg(current->id));
+    const QString part = target + QStringLiteral(".part");
+    QFile::remove(part);
     qCInfo(kalibreboxCore).noquote()
         << QStringLiteral("Syncing library '%1': downloading %2/metadata.db -> %3").arg(current->name, current->dropboxPath, target);
 
     m_client->downloadToFile(current->dropboxPath + QStringLiteral("/metadata.db"),
                              current->sharedLinkUrl,
-                             target,
-                             [this, current, target](std::optional<DropboxFileMetadata> metadata, const QString &error) {
+                             part,
+                             [this, current, target, part](std::optional<DropboxFileMetadata> metadata, const QString &error) {
                                  m_syncing = false;
                                  emit syncingChanged();
                                  if (!metadata) {
+                                     // Keep the previous metadata copy; only the partial
+                                     // file goes away.
+                                     QFile::remove(part);
                                      qCWarning(kalibreboxCore).noquote() << QStringLiteral("Library sync failed: %1").arg(error);
                                      setStatus(QStringLiteral("Library sync failed: %1").arg(error));
                                      return;
                                  }
-                                 // Remember what was fetched so the next sync can skip the
-                                 // download when nothing changed on the remote side.
+                                 // Remember what was fetched only once it is in place, so the
+                                 // next sync can skip the download when nothing changed (and
+                                 // an interrupted one retries instead of losing the library).
+                                 if (!DatabaseHelper::replaceDatabase(current->id, part)) {
+                                     QFile::remove(part);
+                                     DatabaseHelper::openLibrary(current->id);
+                                     setStatus(QStringLiteral("Synced, but the local library could not be loaded."));
+                                     return;
+                                 }
                                  QSettings settings;
                                  const QString prefix = QStringLiteral("metadata_%1_").arg(current->id);
                                  settings.setValue(prefix + QStringLiteral("size"), metadata->size);
                                  settings.setValue(prefix + QStringLiteral("modified"), metadata->serverModifiedEpoch);
-                                 DatabaseHelper::openLibrary(current->id);
                                  qCInfo(kalibreboxCore).noquote()
                                      << QStringLiteral("Library synced: %1 bytes -> %2").arg(QString::number(metadata->size), target);
                                  setTransientStatus(QStringLiteral("Library synced."));

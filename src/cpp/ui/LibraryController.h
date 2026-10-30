@@ -14,6 +14,7 @@
 #include <QUrl>
 #include <QVariantList>
 #include <functional>
+#include <memory>
 
 namespace KalibreBox
 {
@@ -62,6 +63,9 @@ class LibraryController : public QObject
 
 public:
     explicit LibraryController(DropboxClient *client, QObject *parent = nullptr);
+    // Defined out of line: owns LibraryRepository through unique_ptr, which
+    // needs the complete type when this class is destroyed.
+    ~LibraryController() override;
 
     [[nodiscard]] BookListModel *books() const
     {
@@ -190,7 +194,7 @@ private:
     [[nodiscard]] QString sharedLinkCoverPath(const Book &book) const;
 
     DropboxClient *m_client = nullptr;
-    LibraryRepository *m_repository = nullptr;
+    std::unique_ptr<LibraryRepository> m_repository;
     BookListModel *m_model = nullptr;
     Opds::OpdsClient *m_opdsClient = nullptr;
     Opds::OpdsSource *m_opds = nullptr;

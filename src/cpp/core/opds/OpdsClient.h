@@ -59,13 +59,13 @@ private:
     QUrl redirectTarget(QNetworkReply *reply, const QUrl &from, int hopsLeft, QString *error) const;
     static QString describeFailure(QNetworkReply *reply, int status, bool *networkError);
 
-    void getDocument(RequestId id, const QUrl &url, bool wantFeed, int hops, std::function<void(const Outcome &)> done);
+    void getDocument(RequestId id, const QUrl &url, bool wantFeed, int hops, const std::function<void(const Outcome &)> &done);
     void downloadHop(RequestId id,
                      const QUrl &url,
                      const QString &target,
                      int hops,
-                     std::function<void(const FileResult &)> done,
-                     std::function<void(qint64, qint64)> progress);
+                     const std::function<void(const FileResult &)> &done,
+                     const std::function<void(qint64, qint64)> &progress);
 
     QNetworkAccessManager m_nam;
     QHash<RequestId, QPointer<QNetworkReply>> m_active;

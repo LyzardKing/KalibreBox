@@ -7,6 +7,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTimer>
+#include <cstddef>
 
 using namespace KalibreBox::Opds;
 
@@ -42,21 +43,21 @@ public:
     {
         if (!m_server.listen(QHostAddress::Any, 0))
             qFatal("cannot listen");
-        connect(&m_server, &QTcpServer::newConnection, this, [this]() {
+        connect(&m_server, &QTcpServer::newConnection, this, [this] {
             while (QTcpSocket *socket = m_server.nextPendingConnection())
                 accept(socket);
         });
     }
 
-    quint16 port() const
+    [[nodiscard]] quint16 port() const
     {
         return m_server.serverPort();
     }
-    QString url(const QString &host, const QString &path) const
+    [[nodiscard]] QString url(const QString &host, const QString &path) const
     {
         return QStringLiteral("http://%1:%2%3").arg(host).arg(port()).arg(path);
     }
-    QString url(const QString &path) const
+    [[nodiscard]] QString url(const QString &path) const
     {
         return url(QStringLiteral("127.0.0.1"), path);
     }
@@ -64,7 +65,7 @@ public:
     std::function<Response(const Request &)> handler;
     QList<Request> seen;
 
-    const Request *last(const QString &path) const
+    [[nodiscard]] const Request *last(const QString &path) const
     {
         for (qsizetype i = seen.size() - 1; i >= 0; --i) {
             if (seen.at(i).path == path)
@@ -77,7 +78,7 @@ private:
     void accept(QTcpSocket *socket)
     {
         auto *buffer = new QByteArray;
-        connect(socket, &QTcpSocket::readyRead, socket, [this, socket, buffer]() {
+        connect(socket, &QTcpSocket::readyRead, socket, [this, socket, buffer] {
             buffer->append(socket->readAll());
             const qsizetype end = buffer->indexOf("\r\n\r\n");
             if (end < 0)
@@ -93,7 +94,7 @@ private:
             buffer->clear();
             seen.append(request);
             const Response response = handler ? handler(request) : Response{};
-            QTimer::singleShot(response.delayMs, socket, [socket, response]() {
+            QTimer::singleShot(response.delayMs, socket, [socket, response] {
                 if (socket->state() != QAbstractSocket::ConnectedState)
                     return;
                 QByteArray head = "HTTP/1.1 " + QByteArray::number(response.status) + " X\r\nContent-Type: " + response.contentType
@@ -105,7 +106,7 @@ private:
             });
         });
         connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
-        connect(socket, &QObject::destroyed, [buffer]() {
+        connect(socket, &QObject::destroyed, [buffer] {
             delete buffer;
         });
     }
@@ -149,7 +150,7 @@ void tst_opdsclient::sendsBasicCredentialsToTheirHost()
 {
     TestServer server;
     server.handler = [](const Request &) {
-        return Response{200, fixture("gutenberg_root.xml")};
+        return Response{.status = 200, .body = fixture("gutenberg_root.xml")};
     };
     OpdsClient client;
     client.setCredentials(QUrl(server.url(QStringLiteral("/opds"))), QStringLiteral("reader"), QStringLiteral("s3cret: é"));
@@ -168,7 +169,7 @@ void tst_opdsclient::sendsNothingWithoutCredentials()
 {
     TestServer server;
     server.handler = [](const Request &) {
-        return Response{200, fixture("gutenberg_root.xml")};
+        return Response{.status = 200, .body = fixture("gutenberg_root.xml")};
     };
     OpdsClient client;
 
@@ -194,7 +195,8 @@ void tst_opdsclient::keepsCredentialsOnSameHostRedirects()
 {
     TestServer server;
     server.handler = [](const Request &request) {
-        return request.path == QLatin1String("/start") ? redirect(302, QStringLiteral("/other")) : Response{200, fixture("gutenberg_root.xml")};
+        return request.path == QLatin1String("/start") ? redirect(302, QStringLiteral("/other"))
+                                                       : Response{.status = 200, .body = fixture("gutenberg_root.xml")};
     };
     OpdsClient client;
     client.setCredentials(QUrl(server.url(QStringLiteral("/"))), QStringLiteral("reader"), QStringLiteral("pw"));
@@ -215,7 +217,7 @@ void tst_opdsclient::dropsCredentialsWhenRedirectedToAnotherHost()
     // "localhost" and "127.0.0.1" are different hosts as far as credentials go.
     const QString elsewhere = server.url(QStringLiteral("localhost"), QStringLiteral("/other"));
     server.handler = [elsewhere](const Request &request) {
-        return request.path == QLatin1String("/start") ? redirect(302, elsewhere) : Response{200, fixture("gutenberg_root.xml")};
+        return request.path == QLatin1String("/start") ? redirect(302, elsewhere) : Response{.status = 200, .body = fixture("gutenberg_root.xml")};
     };
     OpdsClient client;
     client.setCredentials(QUrl(server.url(QStringLiteral("/"))), QStringLiteral("reader"), QStringLiteral("pw"));
@@ -259,7 +261,7 @@ void tst_opdsclient::explainsDigestOnlyServers()
     server.handler = [](const Request &) {
         Response r;
         r.status = 401;
-        r.headers.insert("WWW-Authenticate", "Digest realm=\"calibre\", nonce=\"abc\"");
+        r.headers.insert("WWW-Authenticate", R"(Digest realm="calibre", nonce="abc")");
         return r;
     };
     OpdsClient client;
@@ -299,7 +301,7 @@ void tst_opdsclient::parsesFeedsAndReportsTheFinalUrl()
     server.handler = [](const Request &request) {
         if (request.path == QLatin1String("/old"))
             return redirect(301, QStringLiteral("/new/feed"));
-        Response r{200, fixture("gutenberg_root.xml")};
+        Response r{.status = 200, .body = fixture("gutenberg_root.xml")};
         r.contentType = "application/atom+xml;profile=opds-catalog;kind=navigation";
         return r;
     };
@@ -321,7 +323,7 @@ void tst_opdsclient::rejectsPagesThatAreNotFeeds()
 {
     TestServer server;
     server.handler = [](const Request &) {
-        Response r{200, "<html><body>Please log in</body></html>"};
+        Response r{.status = 200, .body = "<html><body>Please log in</body></html>"};
         r.contentType = "text/html";
         return r;
     };
@@ -356,17 +358,17 @@ void tst_opdsclient::givesUpOnRedirectLoops()
 
 void tst_opdsclient::downloadsIntoNewFolders()
 {
-    QByteArray payload(300 * 1024, 'x');
+    QByteArray payload(static_cast<qsizetype>(300 * 1024), 'x');
     for (qsizetype i = 0; i < payload.size(); i += 97)
         payload[i] = static_cast<char>('a' + (i / 97) % 26);
 
     TestServer server;
     server.handler = [payload](const Request &) {
-        Response r{200, payload};
+        Response r{.status = 200, .body = payload};
         r.contentType = "application/epub+zip";
         return r;
     };
-    QTemporaryDir dir;
+    QTemporaryDir const dir;
     const QString target = dir.filePath(QStringLiteral("made/on/demand/book.epub"));
 
     OpdsClient client;
@@ -394,9 +396,9 @@ void tst_opdsclient::failedDownloadsLeaveNoFile()
 {
     TestServer server;
     server.handler = [](const Request &) {
-        return Response{404, "<html>missing</html>", "text/html"};
+        return Response{.status = 404, .body = "<html>missing</html>", .contentType = "text/html"};
     };
-    QTemporaryDir dir;
+    QTemporaryDir const dir;
     const QString target = dir.filePath(QStringLiteral("book.epub"));
     QFile existing(target);
     QVERIFY(existing.open(QIODevice::WriteOnly));
@@ -424,11 +426,11 @@ void tst_opdsclient::downloadFollowsRedirects()
     server.handler = [](const Request &request) {
         if (request.path == QLatin1String("/get/1"))
             return redirect(302, QStringLiteral("/files/book.epub"));
-        Response r{200, "EPUBDATA"};
+        Response r{.status = 200, .body = "EPUBDATA"};
         r.contentType = "application/epub+zip";
         return r;
     };
-    QTemporaryDir dir;
+    QTemporaryDir const dir;
     const QString target = dir.filePath(QStringLiteral("book.epub"));
 
     OpdsClient client;
@@ -448,7 +450,7 @@ void tst_opdsclient::cancelledRequestsStaySilent()
 {
     TestServer server;
     server.handler = [](const Request &) {
-        Response r{200, fixture("gutenberg_root.xml")};
+        Response r{.status = 200, .body = fixture("gutenberg_root.xml")};
         r.delayMs = 150;
         return r;
     };
@@ -478,7 +480,7 @@ void tst_opdsclient::sendsAFeedAcceptHeader()
 {
     TestServer server;
     server.handler = [](const Request &) {
-        return Response{200, fixture("gutenberg_root.xml")};
+        return Response{.status = 200, .body = fixture("gutenberg_root.xml")};
     };
     OpdsClient client;
 

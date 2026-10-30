@@ -1,5 +1,6 @@
 #include "core/dropbox/DropboxClient.h"
 
+#include "core/dropbox/DropboxApiArg.h"
 #include "core/dropbox/DropboxAuthProvider.h"
 
 #include <QDir>
@@ -14,13 +15,13 @@
 #include <QSaveFile>
 #include <QSettings>
 
-Q_LOGGING_CATEGORY(kalibreboxDropbox, "kalibrebox.dropbox")
-
 namespace KalibreBox
 {
 
 namespace
 {
+
+Q_LOGGING_CATEGORY(kalibreboxDropbox, "kalibrebox.dropbox")
 
 const QString rpcHost = QStringLiteral("https://api.dropbox.com/2/");
 const QString contentHost = QStringLiteral("https://content.dropboxapi.com/2/");
@@ -176,6 +177,11 @@ void DropboxClient::listFolder(const QString &path, const std::function<void(Dro
             callback({}, error);
             return;
         }
+        const std::optional<DropboxCredential> credential = m_authProvider->credential();
+        if (!credential) {
+            callback({}, QStringLiteral("Not signed in to Dropbox."));
+            return;
+        }
         QJsonObject body;
         body.insert(QStringLiteral("path"), path);
         body.insert(QStringLiteral("recursive"), false);
@@ -189,7 +195,7 @@ void DropboxClient::listFolder(const QString &path, const std::function<void(Dro
                 callback({}, errorSummary);
         };
         // Handle refresh-retry semantics by wrapping retry-once-on-401.
-        postRpc(QStringLiteral("files/list_folder"), m_authProvider->credential()->accessToken, QJsonDocument(body), onCompleted);
+        postRpc(QStringLiteral("files/list_folder"), credential->accessToken, QJsonDocument(body), onCompleted);
     });
 }
 
@@ -200,10 +206,15 @@ void DropboxClient::listFolderContinue(const QString &cursor, const std::functio
             callback({}, error);
             return;
         }
+        const std::optional<DropboxCredential> credential = m_authProvider->credential();
+        if (!credential) {
+            callback({}, QStringLiteral("Not signed in to Dropbox."));
+            return;
+        }
         QJsonObject body;
         body.insert(QStringLiteral("cursor"), cursor);
         postRpc(QStringLiteral("files/list_folder/continue"),
-                m_authProvider->credential()->accessToken,
+                credential->accessToken,
                 QJsonDocument(body),
                 [callback](int statusCode, const QString &errorSummary, const QJsonDocument &response) {
                     if (statusCode == 200)
@@ -221,12 +232,17 @@ void DropboxClient::getMetadata(const QString &path, const std::function<void(st
             callback(std::nullopt, error);
             return;
         }
+        const std::optional<DropboxCredential> credential = m_authProvider->credential();
+        if (!credential) {
+            callback(std::nullopt, QStringLiteral("Not signed in to Dropbox."));
+            return;
+        }
         QJsonObject body;
         body.insert(QStringLiteral("path"), path);
         body.insert(QStringLiteral("include_media_info"), false);
         body.insert(QStringLiteral("include_deleted"), false);
         postRpc(QStringLiteral("files/get_metadata"),
-                m_authProvider->credential()->accessToken,
+                credential->accessToken,
                 QJsonDocument(body),
                 [callback](int statusCode, const QString &errorSummary, const QJsonDocument &response) {
                     if (statusCode == 200)
@@ -266,30 +282,39 @@ void DropboxClient::downloadImpl(const QString &dropboxPath,
                                  const QString &thumbnailSize,
                                  const QString &localTargetPath,
                                  const ByteSink &sink,
-                                 const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback)
+                                 const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback,
+                                 bool allowRefreshRetry)
 {
-    withValidAccessToken([this, dropboxPath, sharedLinkUrl, thumbnailSize, localTargetPath, sink, callback](bool ok, const QString &error) {
+    withValidAccessToken([this, dropboxPath, sharedLinkUrl, thumbnailSize, localTargetPath, sink, callback, allowRefreshRetry](bool ok, const QString &error) {
         if (!ok) {
             callback(std::nullopt, error);
             return;
         }
+        const std::optional<DropboxCredential> credential = m_authProvider->credential();
+        if (!credential) {
+            // A logout between ensureFreshToken and here must not crash.
+            callback(std::nullopt, QStringLiteral("Not signed in to Dropbox."));
+            return;
+        }
+        const QString accessToken = credential->accessToken;
 
-        const auto onCompletion = [this, callback, localTargetPath, sink, dropboxPath, sharedLinkUrl, thumbnailSize](QNetworkReply *reply) {
+        const auto onCompletion = [this, callback, localTargetPath, sink, dropboxPath, sharedLinkUrl, thumbnailSize, allowRefreshRetry](QNetworkReply *reply) {
             const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
             // Refresh-and-retry once when the access token was rejected.
-            if (statusCode == 401 && m_authProvider->credential() && m_authProvider->credential()->hasRefreshToken()) {
+            if (statusCode == 401 && allowRefreshRetry && m_authProvider->credential() && m_authProvider->credential()->hasRefreshToken()) {
                 QNetworkReply *capturedReply = reply;
-                m_authProvider->refreshAccessToken([this, dropboxPath, sharedLinkUrl, thumbnailSize, localTargetPath, sink, callback, capturedReply](
-                                                       const std::optional<DropboxCredential> &refreshed,
-                                                       const QString &refreshError) {
-                    capturedReply->deleteLater();
-                    if (!refreshed) {
-                        callback(std::nullopt, refreshError);
-                        return;
-                    }
-                    downloadImpl(dropboxPath, sharedLinkUrl, thumbnailSize, localTargetPath, sink, callback);
-                });
+                m_authProvider->refreshAccessToken(
+                    [this, dropboxPath, sharedLinkUrl, thumbnailSize, localTargetPath, sink, callback, allowRefreshRetry, capturedReply](
+                        const std::optional<DropboxCredential> &refreshed,
+                        const QString &refreshError) {
+                        capturedReply->deleteLater();
+                        if (!refreshed) {
+                            callback(std::nullopt, refreshError);
+                            return;
+                        }
+                        downloadImpl(dropboxPath, sharedLinkUrl, thumbnailSize, localTargetPath, sink, callback, false);
+                    });
                 return;
             }
             qCDebug(kalibreboxDropbox).noquote() << QStringLiteral("Content response: HTTP %1, %2 bytes").arg(statusCode).arg(QString::number(reply->size()));
@@ -378,8 +403,8 @@ void DropboxClient::downloadImpl(const QString &dropboxPath,
 
         QNetworkRequest request(endpoint);
         request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/octet-stream"));
-        request.setRawHeader(QByteArrayLiteral("Authorization"), (bearerPrefix + m_authProvider->credential()->accessToken).toUtf8());
-        request.setRawHeader(QByteArrayLiteral("Dropbox-API-Arg"), QJsonDocument(apiArguments).toJson(QJsonDocument::Compact));
+        request.setRawHeader(QByteArrayLiteral("Authorization"), (bearerPrefix + accessToken).toUtf8());
+        request.setRawHeader(QByteArrayLiteral("Dropbox-API-Arg"), asciiJsonArgument(QJsonDocument(apiArguments)).toUtf8());
         qCDebug(kalibreboxDropbox).noquote()
             << QStringLiteral("GET content: %1 (local: %2)").arg(QString::fromUtf8(request.rawHeader(QByteArrayLiteral("Dropbox-API-Arg"))), localTargetPath);
         QNetworkReply *reply = m_nam->post(request, QByteArray());
@@ -396,13 +421,18 @@ void DropboxClient::copyFile(const QString &fromPath, const QString &toPath, con
             callback(false, error);
             return;
         }
+        const std::optional<DropboxCredential> credential = m_authProvider->credential();
+        if (!credential) {
+            callback(false, QStringLiteral("Not signed in to Dropbox."));
+            return;
+        }
         QJsonObject body;
         body.insert(QStringLiteral("from_path"), fromPath);
         body.insert(QStringLiteral("to_path"), toPath);
         body.insert(QStringLiteral("autorename"), false);
 
         postRpc(QStringLiteral("files/copy_v2"),
-                m_authProvider->credential()->accessToken,
+                credential->accessToken,
                 QJsonDocument(body),
                 [callback](int statusCode, const QString &errorSummary, const QJsonDocument & /*response*/) {
                     if (statusCode == 200)
@@ -420,10 +450,15 @@ void DropboxClient::deletePath(const QString &path, const std::function<void(boo
             callback(false, error);
             return;
         }
+        const std::optional<DropboxCredential> credential = m_authProvider->credential();
+        if (!credential) {
+            callback(false, QStringLiteral("Not signed in to Dropbox."));
+            return;
+        }
         QJsonObject body;
         body.insert(QStringLiteral("path"), path);
         postRpc(QStringLiteral("files/delete_v2"),
-                m_authProvider->credential()->accessToken,
+                credential->accessToken,
                 QJsonDocument(body),
                 [callback](int statusCode, const QString &errorSummary, const QJsonDocument &) {
                     callback(statusCode == 200, errorSummary);

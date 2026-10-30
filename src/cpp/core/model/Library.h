@@ -7,7 +7,7 @@
 namespace KalibreBox
 {
 
-enum class LibrarySourceType {
+enum class LibrarySourceType : std::uint8_t {
     Dropbox,
     Opds,
 };

@@ -4,6 +4,8 @@
 
 using namespace KalibreBox::DropboxUrls;
 
+namespace
+{
 class tst_dropboxurls : public QObject
 {
     Q_OBJECT
@@ -15,9 +17,11 @@ private slots:
     void sharedLinksAreMarkers();
     void oldSharedLinksAreMarkers();
     void nonDropboxUrlsFail();
+    void hostMatchingIsExact();
     void isUrlDetection();
     void isValidPathDetection();
 };
+}
 
 void tst_dropboxurls::absolutePathsPassThrough()
 {
@@ -60,6 +64,18 @@ void tst_dropboxurls::nonDropboxUrlsFail()
 {
     QVERIFY(extractPath(QStringLiteral("https://example.com/scl/fo/xyz")).isEmpty());
     QVERIFY(!isSharedLink(QStringLiteral("https://example.com/scl/fo/xyz")));
+}
+
+void tst_dropboxurls::hostMatchingIsExact()
+{
+    // Plain look-alike hosts must not count as Dropbox.
+    QVERIFY(extractPath(QStringLiteral("https://evildropbox.com/home/Books")).isEmpty());
+    QVERIFY(!isSharedLink(QStringLiteral("https://evildropbox.com/scl/fo/xyz")));
+    QVERIFY(extractPath(QStringLiteral("https://dropbox.com.evil.com/sh/xyz/ab")).isEmpty());
+    // The real domains and subdomains keep working.
+    QCOMPARE(extractPath(QStringLiteral("https://dropbox.com/home/Books")), QStringLiteral("/Books"));
+    QCOMPARE(extractPath(QStringLiteral("https://www.dropbox.com/home/Books")), QStringLiteral("/Books"));
+    QVERIFY(isSharedLink(QStringLiteral("https://www.dropbox.com/scl/fo/xyz?rlkey=ab12")));
 }
 
 void tst_dropboxurls::isUrlDetection()

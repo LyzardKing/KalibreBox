@@ -96,7 +96,7 @@ Kirigami.Page {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 0
-    
+
                 Controls.Label {
                     visible: root.book.comment.length > 0
                     text: KI18n.i18n("Description")

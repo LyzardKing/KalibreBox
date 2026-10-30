@@ -91,7 +91,8 @@ private:
                       const QString &thumbnailSize,
                       const QString &localTargetPath,
                       const ByteSink &sink,
-                      const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback);
+                      const std::function<void(std::optional<DropboxFileMetadata>, const QString &)> &callback,
+                      bool allowRefreshRetry = true);
 
     /// Validates the credential, refreshing if needed, then calls `then`.
     void withValidAccessToken(const std::function<void(bool, const QString &)> &then);

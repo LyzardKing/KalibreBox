@@ -24,8 +24,9 @@ private slots:
     void sortOrders();
     void filterBooksCaseAccentInsensitive();
     void clearDatabaseRemovesFile();
+    void replaceDatabaseSwapsAtomically();
+    void replaceDatabaseRejectsMissingPart();
 
-private:
     QString libraryId;
 };
 
@@ -134,6 +135,57 @@ void tst_databasehelper::clearDatabaseRemovesFile()
     QVERIFY(DatabaseHelper::clearDatabase(libraryId));
     QVERIFY(!QFile(DatabaseHelper::databaseFilePath(libraryId)).exists());
     QVERIFY(DatabaseHelper::getBooks(libraryId).isEmpty());
+}
+
+namespace
+{
+void openCalibreCopy(const QString &filePath)
+{
+    {
+        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("replace_copy"));
+        db.setDatabaseName(filePath);
+        QVERIFY(db.open());
+        QSqlQuery query(db);
+        for (const QString &statement : DatabaseHelper::calibreSchemaStatements())
+            QVERIFY(query.exec(statement));
+        QVERIFY(query.exec("INSERT INTO books (id, title, path, has_cover) VALUES (9, 'New Book', 'New/Path', 0)"));
+        db.close();
+    }
+    QSqlDatabase::removeDatabase(QStringLiteral("replace_copy"));
+}
+}
+
+void tst_databasehelper::replaceDatabaseSwapsAtomically()
+{
+    DatabaseHelper::clearDatabase(libraryId);
+
+    // The live copy, as a previous sync would have written it.
+    QVERIFY(DatabaseHelper::openLibrary(libraryId));
+    {
+        QSqlQuery query(QSqlDatabase::database(QStringLiteral("kalibrebox_%1").arg(libraryId), false));
+        for (const QString &statement : DatabaseHelper::calibreSchemaStatements())
+            QVERIFY(query.exec(statement));
+        QVERIFY(query.exec("INSERT INTO books (id, title, path, has_cover) VALUES (1, 'Old Book', 'Old/Path', 0)"));
+    }
+
+    // A freshly downloaded replacement staged next to the live file.
+    const QString part = DatabaseHelper::databaseFilePath(libraryId) + QStringLiteral(".part");
+    openCalibreCopy(part);
+
+    QVERIFY(DatabaseHelper::replaceDatabase(libraryId, part));
+    QVERIFY(!QFile::exists(part));
+    const QList<Book> books = DatabaseHelper::getBooks(libraryId);
+    QCOMPARE(books.size(), 1);
+    QCOMPARE(books.at(0).title, QStringLiteral("New Book"));
+}
+
+void tst_databasehelper::replaceDatabaseRejectsMissingPart()
+{
+    const QString missing = DatabaseHelper::databaseFilePath(libraryId) + QStringLiteral(".absent");
+    QVERIFY(!DatabaseHelper::replaceDatabase(libraryId, missing));
+    // The library stays usable.
+    QVERIFY(DatabaseHelper::isOpen(libraryId));
+    QVERIFY(!DatabaseHelper::getBooks(libraryId).isEmpty());
 }
 
 QTEST_MAIN(tst_databasehelper)

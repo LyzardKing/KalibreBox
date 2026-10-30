@@ -25,7 +25,7 @@ class BookListModel : public QAbstractListModel
     Q_OBJECT
 
 public:
-    enum Role {
+    enum Role : std::uint16_t {
         IdRole = Qt::UserRole + 1,
         TitleRole,
         AuthorsRole,

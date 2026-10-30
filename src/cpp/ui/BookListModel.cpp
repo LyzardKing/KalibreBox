@@ -1,7 +1,5 @@
 #include "ui/BookListModel.h"
 
-#include <algorithm>
-
 namespace KalibreBox
 {
 
@@ -85,7 +83,7 @@ QList<qlonglong> BookListModel::bookIdsInRange(int first, int last) const
 
 int BookListModel::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid() ? 0 : m_books.size();
+    return parent.isValid() ? 0 : static_cast<int>(m_books.size());
 }
 
 QVariant BookListModel::data(const QModelIndex &index, int role) const

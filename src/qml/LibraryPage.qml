@@ -247,8 +247,7 @@ Kirigami.Page {
             visible: grid.count === 0 && !(LibraryController.isOpds && LibraryController.syncing)
             icon.name: "bookmarks-organize"
             text: !LibraryController.hasLibrary ? KI18n.i18n("No library configured") : KI18n.i18n("No books found")
-            explanation: !LibraryController.hasLibrary ? (LibraryController.signedIn ? KI18n.i18n("Add a Dropbox Calibre library to get started.") : KI18n.i18n("Sign in to Dropbox first, then add a Calibre library.")) : (LibraryController.searchQuery.length ? KI18n.i18n("Nothing matches the current filter.") : (LibraryController.isOpds ? KI18n.i18n("The catalogue returned no books. Check its address and your connection.") : KI18n.i18n("Syncing may still be running, or the library is empty."))
-            )
+            explanation: !LibraryController.hasLibrary ? (LibraryController.signedIn ? KI18n.i18n("Add a Dropbox Calibre library to get started.") : KI18n.i18n("Sign in to Dropbox first, then add a Calibre library.")) : (LibraryController.searchQuery.length ? KI18n.i18n("Nothing matches the current filter.") : (LibraryController.isOpds ? KI18n.i18n("The catalogue returned no books. Check its address and your connection.") : KI18n.i18n("Syncing may still be running, or the library is empty.")))
             // Catalogues have nothing to sign in to or add.
             helpfulAction: LibraryController.hasLibrary && LibraryController.isOpds ? null : (LibraryController.signedIn ? root.addLibraryAction : root.signInAction)
         }

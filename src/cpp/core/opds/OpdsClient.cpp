@@ -135,19 +135,19 @@ QString OpdsClient::describeFailure(QNetworkReply *reply, int status, bool *netw
     return QStringLiteral("HTTP %1 %2").arg(status).arg(reason).trimmed();
 }
 
-void OpdsClient::getDocument(RequestId id, const QUrl &url, bool wantFeed, int hops, std::function<void(const Outcome &)> done)
+void OpdsClient::getDocument(RequestId id, const QUrl &url, bool wantFeed, int hops, const std::function<void(const Outcome &)> &done)
 {
     QNetworkReply *reply = send(url, wantFeed);
     m_active.insert(id, reply);
 
-    auto oversize = std::make_shared<bool>(false);
+    auto const oversize = std::make_shared<bool>(false);
     connect(reply, &QNetworkReply::downloadProgress, this, [reply, oversize](qint64 received, qint64) {
         if (received > maxDocumentBytes && !*oversize) {
             *oversize = true;
             reply->abort();
         }
     });
-    connect(reply, &QNetworkReply::finished, this, [this, reply, id, url, wantFeed, hops, done, oversize]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, id, url, wantFeed, hops, done, oversize] {
         reply->deleteLater();
         if (m_active.value(id) != reply)
             return; // cancelled
@@ -220,23 +220,23 @@ void OpdsClient::downloadHop(RequestId id,
                              const QUrl &url,
                              const QString &target,
                              int hops,
-                             std::function<void(const FileResult &)> done,
-                             std::function<void(qint64, qint64)> progress)
+                             const std::function<void(const FileResult &)> &done,
+                             const std::function<void(qint64, qint64)> &progress)
 {
     QNetworkReply *reply = send(url, false);
     m_active.insert(id, reply);
 
-    auto file = std::make_shared<QSaveFile>(target);
-    auto failure = std::make_shared<QString>();
+    auto const file = std::make_shared<QSaveFile>(target);
+    auto const failure = std::make_shared<QString>();
 
-    const auto openTarget = [file, target]() {
+    const auto openTarget = [file, target] {
         if (file->isOpen())
             return true;
         QDir().mkpath(QFileInfo(target).absolutePath());
         return file->open(QIODevice::WriteOnly);
     };
 
-    connect(reply, &QNetworkReply::readyRead, this, [reply, file, failure, openTarget]() {
+    connect(reply, &QNetworkReply::readyRead, this, [reply, file, failure, openTarget] {
         if (!isSuccess(statusOf(reply))) {
             reply->readAll(); // an error page or a redirect body, not the file
             return;
@@ -250,7 +250,7 @@ void OpdsClient::downloadHop(RequestId id,
         if (progress)
             progress(received, total);
     });
-    connect(reply, &QNetworkReply::finished, this, [this, reply, id, url, target, hops, done, progress, file, failure, openTarget]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, id, url, target, hops, done, progress, file, failure, openTarget] {
         reply->deleteLater();
         if (m_active.value(id) != reply)
             return; // cancelled; the QSaveFile discards its temporary file
@@ -289,7 +289,7 @@ RequestId
 OpdsClient::downloadFile(const QUrl &url, const QString &targetPath, std::function<void(const FileResult &)> done, std::function<void(qint64, qint64)> progress)
 {
     const RequestId id = ++m_nextId;
-    downloadHop(id, url, targetPath, maxRedirects, std::move(done), std::move(progress));
+    downloadHop(id, url, targetPath, maxRedirects, done, progress);
     return id;
 }
 

@@ -3,14 +3,22 @@
 #include <QUrl>
 #include <QUrlQuery>
 
-#include <algorithm>
-
 namespace KalibreBox::DropboxUrls
 {
 
+namespace
+{
+// The exact host, or a subdomain of it: suffix matching without the leading
+// separator would also let `evildropbox.com` through.
+bool isDropboxHost(const QString &host)
+{
+    return host == QLatin1String("dropbox.com") || host.endsWith(QLatin1String(".dropbox.com"));
+}
+}
+
 QString extractPath(const QString &input)
 {
-    const QString trimmed = input.trimmed();
+    QString trimmed = input.trimmed();
 
     // Already an absolute path.
     if (trimmed.startsWith(u'/'))
@@ -24,10 +32,10 @@ QString extractPath(const QString &input)
     if (!url.isValid() || url.host().isEmpty())
         return {};
 
-    if (!url.host().endsWith(QStringLiteral("dropbox.com")))
+    if (!isDropboxHost(url.host()))
         return {};
 
-    const QString path = url.path();
+    QString path = url.path();
     if (path.startsWith(QStringLiteral("/home/"))) {
         return path.mid(QStringLiteral("/home").size());
     }
@@ -49,7 +57,7 @@ bool isSharedLink(const QString &input)
         return false;
 
     const QUrl url = QUrl(trimmed);
-    if (!url.isValid() || url.host().isEmpty() || !url.host().endsWith(QStringLiteral("dropbox.com")))
+    if (!url.isValid() || url.host().isEmpty() || !isDropboxHost(url.host()))
         return false;
 
     const QString path = url.path();
