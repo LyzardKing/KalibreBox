@@ -1,6 +1,6 @@
 # Variables
-PACKAGE_NAME ?= org.kde.kalibrebox
-MAIN_ACTIVITY ?= org.kde.kalibrebox.MainActivity
+PACKAGE_NAME ?= org.lyzardking.kalibrebox
+MAIN_ACTIVITY ?= org.lyzardking.kalibrebox.MainActivity
 
 .PHONY: build clean start-android start-android-arm32 build-android build-android-arm32 \
 	sign-android sign-android-arm32 install-android logcat lint lint-cpp lint-qml lint-fix format

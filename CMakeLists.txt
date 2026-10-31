@@ -116,7 +116,7 @@ if(ANDROID)
     endforeach()
     set_target_properties(kalibrebox PROPERTIES
         QT_ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android"
-        QT_ANDROID_PACKAGE_NAME "io.github.kalibrebox"
+        QT_ANDROID_PACKAGE_NAME "org.lyzardking.kalibrebox"
         QT_ANDROID_VERSION_CODE 1
         QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
     )

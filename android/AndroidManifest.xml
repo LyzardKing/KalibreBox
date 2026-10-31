@@ -7,11 +7,11 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
+    <!-- No auto backup: the Dropbox tokens are stored unencrypted (see TODO.md),
+        so ever copying them into Google cloud backups must be opt-in later,
+        once tokens are not stored in plaintext. -->
     <application
         android:label="KalibreBox"
-        <!-- No auto backup: the Dropbox tokens are stored unencrypted (see TODO.md),
-             so ever copying them into Google cloud backups must be opt-in later,
-             once tokens are not stored in plaintext. -->
         android:allowBackup="false"
         android:hardwareAccelerated="true">
 
