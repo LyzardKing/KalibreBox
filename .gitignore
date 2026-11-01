@@ -7,6 +7,9 @@ CMakeLists.txt.user*
 
 # Secrets (Dropbox app key etc.)
 local.properties
+.env
+*.keystore
+*.jks
 
 # CMake
 CMakeCache.txt

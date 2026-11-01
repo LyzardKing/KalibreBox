@@ -20,6 +20,10 @@
 #include <QStyleHints>
 #include <QUrl>
 
+#ifdef Q_OS_ANDROID
+#include "ui/AndroidDownloads.h"
+#endif
+
 #include <algorithm>
 
 namespace KalibreBox

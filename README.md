@@ -52,10 +52,31 @@ cmake --build build -j$(nproc)
 
 ## Build for Android
 
-Inside the container, check that the blueprint is mounted:
+Build with the same KDE Android image used for local Craft builds:
 
+```sh
+make build-android
+```
 
-Then add /home/user/KalibreBox/craft to the Locations setting in ~/CraftRoot/etc/CraftSettings.ini under [Blueprints]. Keep any existing locations and add this path to them rather than replacing them. After that, run:
+This runs `scripts/build-android.sh` and writes the unsigned APK to
+`dist/kalibrebox-unsigned.apk`. If `~/craft-kde-android` (override with
+`CRAFT_ROOT=/path`) has no Craft root yet, `scripts/bootstrap-android-craft.sh`
+creates one inside the Android image (arm64) and registers this repository's
+`craft` directory as a blueprint location. `ANDROID_IMAGE` and `OUTPUT_APK` can
+also be overridden.
+
+Releases are built and published locally: `make release version=X.Y.Z` (or
+`scripts/release-android.sh X.Y.Z`) bumps the version, tags and pushes, builds
+and signs the APK, and uploads it with `gh release create`. Without `version`
+it releases the current version, which must already be tagged. This needs
+`gh` logged in, plus `KEYSTORE` and `KEYSTORE_PASS` (see below).
+
+To sign the APK, run `make sign-android` (or `scripts/sign-android.sh`). It
+zip-aligns, signs and verifies `dist/kalibrebox-unsigned.apk` inside the same
+Docker image and writes `dist/kalibrebox.apk`. Configure it with `KEYSTORE`
+(default `$CRAFT_ROOT/tmp/key.keystore`), `KEYSTORE_PASS` (prompted for when
+unset and a terminal is available), and optionally `INPUT_APK`
+and `OUTPUT_APK`.
 
 Check the upstream Craft docs for any updates on Android builds.
 https://develop.kde.org/docs/packaging/android/building_applications/

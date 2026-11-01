@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage: scripts/bump MAJOR.MINOR.PATCH
+#
+# Updates the project VERSION in CMakeLists.txt, commits, pushes, and pushes a
+# v<version> tag, which triggers the Android release workflow. The Android
+# version code is derived from the version in CMakeLists.txt
+# (major*10000 + minor*100 + patch), so it always grows with the version.
+
+if [[ $# -ne 1 ]]; then
+    echo "Usage: $(basename "$0") MAJOR.MINOR.PATCH" >&2
+    exit 2
+fi
+
+NEW_VERSION="$1"
+if ! [[ "$NEW_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "Error: version must be MAJOR.MINOR.PATCH (e.g. 1.2.3)" >&2
+    exit 2
+fi
+NEW_CODE=$(( BASH_REMATCH[1] * 10000 + BASH_REMATCH[2] * 100 + BASH_REMATCH[3] ))
+
+cd "$(git rev-parse --show-toplevel)"
+CMAKE_FILE="CMakeLists.txt"
+
+if [[ -n "$(git status --porcelain)" ]]; then
+    echo "Error: working tree has uncommitted changes." >&2
+    git status --porcelain >&2
+    exit 1
+fi
+
+CURRENT_VERSION="$(sed -nE '/^project\(/,/\)/ s/^[[:space:]]*VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' "$CMAKE_FILE" | head -n1)"
+if [[ -z "$CURRENT_VERSION" ]]; then
+    echo "Error: could not find the project VERSION in $CMAKE_FILE" >&2
+    exit 1
+fi
+
+IFS=. read -r cmaj cmin cpat <<<"$CURRENT_VERSION"
+CURRENT_CODE=$(( cmaj * 10000 + cmin * 100 + cpat ))
+if (( NEW_CODE <= CURRENT_CODE )); then
+    echo "Error: $NEW_VERSION is not newer than $CURRENT_VERSION" >&2
+    exit 1
+fi
+
+TAG="v${NEW_VERSION}"
+if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+    echo "Error: tag $TAG already exists" >&2
+    exit 1
+fi
+
+sed -i -E "/^project\(/,/\)/ s/^([[:space:]]*VERSION[[:space:]]+)[0-9]+\.[0-9]+\.[0-9]+/\1${NEW_VERSION}/" "$CMAKE_FILE"
+
+git add "$CMAKE_FILE"
+git commit -m "Bump version to ${NEW_VERSION} (code ${NEW_CODE})"
+git push origin "$(git rev-parse --abbrev-ref HEAD)"
+
+git tag -a "$TAG" -m "Release ${NEW_VERSION}"
+git push origin "$TAG"
+
+echo "Bumped ${CURRENT_VERSION} -> ${NEW_VERSION} (code ${NEW_CODE}) and pushed ${TAG}."

@@ -1,8 +1,12 @@
+# Optional local settings, see .env.template.
+-include .env
+export
+
 # Variables
 PACKAGE_NAME ?= org.lyzardking.kalibrebox
 MAIN_ACTIVITY ?= org.lyzardking.kalibrebox.MainActivity
 
-.PHONY: build clean start-android start-android-arm32 build-android build-android-arm32 \
+.PHONY: bump release build clean start-android start-android-arm32 build-android build-android-arm32 \
 	sign-android sign-android-arm32 install-android logcat lint lint-cpp lint-qml lint-fix format
 
 build:
@@ -13,52 +17,42 @@ clean:
 	rm -rf build
 
 start-android:
-	docker run -ti --rm -v ~/craft-kde-android:/home/user/CraftRoot -v ~/Documents/Projects/KalibreBox:/home/user/KalibreBox invent-registry.kde.org/sysadmin/ci-images/android-qt611 bash
+	docker run -ti --rm -v "$(CRAFT_ROOT)":/home/user/CraftRoot -v "$(CURDIR)":/home/user/KalibreBox "$(ANDROID_IMAGE)" bash
 
 start-android-arm32:
-	docker run -ti --rm -v ~/craft-kde-32:/home/user/CraftRoot -v ~/Documents/Projects/KalibreBox:/home/user/KalibreBox invent-registry.kde.org/sysadmin/ci-images/android-qt611 bash
+	docker run -ti --rm -v "$(HOME)/craft-kde-32":/home/user/CraftRoot -v "$(CURDIR)":/home/user/KalibreBox "$(ANDROID_IMAGE)" bash
 
-# Android builds run in KDE's android-qt611 image with a persistent Craft root
+# Android builds run in KDE's andr oid-qt611 image with a persistent Craft root
 # mounted at /home/user/CraftRoot (the same layout as start-android).
 # CRAFT_ROOT picks the ABI: ~/craft-kde-android is arm64-v8a, ~/craft-kde-32
 # is armeabi-v7a (ABI = android-clang-arm32 in its etc/CraftSettings.ini).
 ANDROID_IMAGE ?= invent-registry.kde.org/sysadmin/ci-images/android-qt611
 CRAFT_ROOT ?= $(HOME)/craft-kde-android
 
-define android_craft
-docker run --rm -ti \
-	-v "$(CRAFT_ROOT)":/home/user/CraftRoot \
-	-v "$(CURDIR)":/home/user/KalibreBox \
-	--entrypoint bash $(ANDROID_IMAGE) -c \
-	'source /home/user/CraftRoot/craft/craftenv.sh && $(1)'
-endef
+bump:
+	scripts/bump $(version)
+
+release:
+	scripts/release-android.sh $(version)
 
 build-android:
-	$(call android_craft,craft --install-deps apps/kalibrebox && \
-	craft --options apps/kalibrebox.srcDir=/home/user/KalibreBox \
-	--configure --make apps/kalibrebox && \
-	cd /home/user/CraftRoot/build/apps/kalibrebox/work/build && \
-	cmake --install . --prefix $$PWD/android-icons && \
-	cmake --build . --target apk)
+	CRAFT_ROOT="$(CRAFT_ROOT)" ANDROID_IMAGE="$(ANDROID_IMAGE)" scripts/build-android.sh
 
 # 32-bit build for devices that only report armeabi-v7a (e.g. Fire tablets).
 build-android-arm32:
 	$(MAKE) build-android CRAFT_ROOT=$(HOME)/craft-kde-32
 
-# Signs the release APK from the Craft root's tmp/ (where `craft --package`
-# puts it) with tmp/key.keystore; apksigner asks for the keystore password.
+# Signs dist/kalibrebox-unsigned.apk into dist/kalibrebox.apk. Uses
+# $(CRAFT_ROOT)/tmp/key.keystore unless KEYSTORE is set; the password comes
+# from KEYSTORE_PASS or an interactive prompt.
 sign-android:
-	$(call android_craft,cd /home/user/CraftRoot/tmp && \
-	cp /home/user/CraftRoot/build/apps/kalibrebox/work/build/android-build/build/outputs/apk/release/android-build-release-unsigned.apk /home/user/CraftRoot/tmp && \
-	$$ANDROID_HOME/build-tools/$$ANDROID_BUILD_TOOLS_REVISION/zipalign -p -f -v 4 android-build-release-unsigned.apk kalibrebox.signed.apk && \
-	$$ANDROID_HOME/build-tools/$$ANDROID_BUILD_TOOLS_REVISION/apksigner sign --verbose --ks key.keystore --ks-pass pass:123456 kalibrebox.signed.apk)
-	cp $(CRAFT_ROOT)/tmp/kalibrebox.signed.apk .
+	CRAFT_ROOT="$(CRAFT_ROOT)" ANDROID_IMAGE="$(ANDROID_IMAGE)" scripts/sign-android.sh
 
 sign-android-arm32:
 	$(MAKE) sign-android CRAFT_ROOT=$(HOME)/craft-kde-32
 
 install-android:
-	adb install -r $(CRAFT_ROOT)/tmp/kalibrebox.signed.apk
+	adb install -r dist/kalibrebox.apk
 
 logcat:
 	adb logcat -v threadtime -s AndroidRuntime:E DEBUG:E libc:F Qt:W default:V kalibrebox.core:V
