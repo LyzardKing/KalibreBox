@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(KalibreBox
-    VERSION 0.1.1
+    VERSION 0.1.2
     DESCRIPTION "Calibre e-book library manager for Dropbox, built with Kirigami"
     LANGUAGES CXX
 )
