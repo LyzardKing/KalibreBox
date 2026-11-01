@@ -1,5 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="-- %%INSERT_VERSION_CODE%% --"
+    android:versionName="-- %%INSERT_VERSION_NAME%% --">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Only needed before Android 10, which has scoped Downloads access. -->
